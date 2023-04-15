@@ -1,0 +1,30 @@
+{
+  "private": true,
+  "author": "xzzpig <w2xzzpig@hotmail.com>",
+  "scripts": {
+    "dev": "max dev",
+    "build": "max build",
+    "format": "prettier --cache --write .",
+    "postinstall": "max setup",
+    "setup": "max setup",
+    "start": "npm run dev"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.0.1",
+    "@ant-design/pro-components": "^2.0.1",
+    "@apollo/client": "^3.7.11",
+    "@umijs/max": "^4.0.64",
+    "antd": "^5.0.0",
+    "apollo-boost": "^0.4.9",
+    "graphql": "^16.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "prettier-plugin-organize-imports": "^2",
+    "prettier-plugin-packagejson": "^2",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,216 @@
+"""
+路由
+"""
+type Route implements HasID{
+	id: ID @goTag(
+	key: "bson"
+	value: "_id"
+)
+	"""
+	地址
+	"""
+	name: String
+	"""
+	描述
+	"""
+	description: String
+	"""
+	项目
+	"""
+	project: Project @goTag(
+	key: "bson"
+	value: "-"
+) @goField(
+	forceResolver: true
+)
+	projectID: ID @goTag(
+	key: "bson"
+	value: "project"
+)
+}
+
+"""
+项目
+"""
+type Project implements HasID{
+	id: ID @goTag(
+	key: "bson"
+	value: "_id"
+)
+	"""
+	项目编码
+	"""
+	code: String
+	"""
+	项目名称
+	"""
+	name: String
+	"""
+	当前机器
+	"""
+	machine: Machine @goTag(
+	key: "bson"
+	value: "-"
+) @goField(
+	forceResolver: true
+)
+	"""
+	可用机器
+	"""
+	machines: [Machine] @goTag(
+	key: "bson"
+	value: "-"
+) @goField(
+	forceResolver: true
+)
+	"""
+	当前机器ID
+	"""
+	machineID: ID @goTag(
+	key: "bson"
+	value: "machine"
+)
+	"""
+	可用机器ID
+	"""
+	machineIDs: [ID] @goTag(
+	key: "bson"
+	value: "machines"
+)
+	routes: [Route] @goTag(
+	key: "bson"
+	value: "-"
+) @goField(
+	forceResolver: true
+)
+}
+
+"""
+机器
+"""
+type Machine implements HasID{
+	id: ID @goTag(
+	key: "bson"
+	value: "_id"
+)
+	"""
+	名称
+	"""
+	name: String
+}
+
+"""
+项目路由同步结果
+"""
+type SyncResult{
+	projectID: ID!
+	project: Project @goField(
+	forceResolver: true
+)
+	routeID: ID!
+	route: Route @goField(
+	forceResolver: true
+)
+	machineID: ID!
+	machine: Machine @goField(
+	forceResolver: true
+)
+	"""
+	路由是否启用
+	"""
+	routeEnable: Boolean!
+}
+
+type Query{
+	projects: [Project]
+	machines: [Machine]
+	routes: [Route]
+}
+
+type Mutation{
+	project: ProjectMutation
+	route: RouteMutation
+	machine: MachineMutation
+}
+
+type ProjectMutation{
+	saveProject(
+		projectInput: ProjectInput
+	): Project @goField(
+	forceResolver: true
+)
+	deleteProject(
+		id: ID!
+	): Int! @goField(
+	forceResolver: true
+)
+	syncProjectRoute(
+		projectID: ID
+	): [SyncResult!] @goField(
+	forceResolver: true
+)
+}
+
+type RouteMutation{
+	saveRoute(
+		routeInput: RouteInput
+	): Route @goField(
+	forceResolver: true
+)
+	deleteRoute(
+		id: ID!
+	): Int! @goField(
+	forceResolver: true
+)
+}
+
+type MachineMutation{
+	saveMachine(
+		machineInput: MachineInput
+	): Machine @goField(
+	forceResolver: true
+)
+	deleteMachine(
+		id: ID!
+	): Int! @goField(
+	forceResolver: true
+)
+}
+
+input ProjectInput{
+	id: ID
+	code: String
+	name: String
+	machineID: ID
+	machineIDs: [String]
+}
+
+input RouteInput{
+	id: ID
+	name: String
+	description: String
+	projectID: ID
+}
+
+input MachineInput{
+	id: ID
+	name: String
+}
+
+directive @goTag(
+	key: String!
+	value: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goField(
+	forceResolver: Boolean
+	name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+interface HasID{
+	id: ID
+}
+schema{
+	query: Query,
+	mutation: Mutation
+}

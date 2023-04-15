@@ -1,0 +1,13 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">
+ <g>
+  <ellipse id="svg_1" fill="#141414" ry="2.88514" rx="2.89214" cy="11.7148" cx="2.89214"/>
+  <ellipse id="svg_2" fill="#141414" ry="2.88514" rx="2.89214" cy="11.7148" cx="11.5685"/>
+  <ellipse id="svg_3" fill="#141414" ry="2.88514" rx="2.89214" cy="20.3703" cx="2.89214"/>
+  <ellipse id="svg_4" fill="#141414" ry="2.88514" rx="2.89214" cy="20.3703" cx="20.245"/>
+  <ellipse opacity="0.2" id="svg_5" fill="#141414" ry="2.88514" rx="2.89214" cy="20.3703" cx="11.5685"/>
+  <ellipse id="svg_6" fill="#141414" ry="2.88514" rx="2.89214" cy="11.7148" cx="20.245"/>
+  <ellipse id="svg_7" fill="#141414" ry="2.88514" rx="2.89214" cy="3.0594" cx="2.89214"/>
+  <ellipse id="svg_8" fill="#141414" ry="2.88514" rx="2.89214" cy="3.0594" cx="11.5685" opacity="0.2"/>
+  <ellipse id="svg_9" fill="#141414" ry="2.88514" rx="2.89214" cy="3.0594" cx="20.245"/>
+ </g>
+</svg>

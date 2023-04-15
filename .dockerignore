@@ -1,0 +1,6 @@
+.vscode
+front/headscale-manager-ui/dist
+front/headscale-manager-ui/node_modules
+.env.*.local
+.dockerignore
+Dockerfile
