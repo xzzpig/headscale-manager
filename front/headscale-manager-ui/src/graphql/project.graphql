@@ -1,0 +1,52 @@
+mutation saveProject($projectInput: ProjectInput) {
+  project {
+    saveProject(projectInput: $projectInput) {
+      id
+    }
+  }
+}
+
+mutation deleteProject($projectID: ID!) {
+  project {
+    deleteProject(id: $projectID)
+  }
+}
+
+mutation syncProjectRoute($syncProjectID: ID) {
+  project {
+    syncProjectRoute(projectID: $syncProjectID) {
+      project {
+        name
+      }
+      machine {
+        name
+      }
+      route {
+        name
+      }
+      routeEnable
+    }
+  }
+}
+
+query projects {
+  projects {
+    id
+    name
+    code
+    routes {
+      id
+      name
+    }
+    machineID
+    machine {
+      id
+      name
+    }
+    machineIDs
+    machines {
+      id
+      name
+    }
+  }
+}

@@ -1,5 +1,4 @@
 import { defineConfig } from '@umijs/max';
-import icon from "@/assets/favicon.svg"
 
 export default defineConfig({
   antd: {
@@ -24,7 +23,12 @@ export default defineConfig({
   routes: [
     {
       path: '/',
-      redirect: '/project',
+      redirect: '/device',
+    },
+    {
+      name: '设备',
+      path: '/device',
+      component: './Device',
     },
     {
       name: '项目',

@@ -1,0 +1,21 @@
+mutation saveMachine($machineInput: MachineInput) {
+  machine {
+    saveMachine(machineInput: $machineInput) {
+      id
+      name
+    }
+  }
+}
+
+mutation deleteMachine($machineID: ID!) {
+  machine {
+    deleteMachine(id: $machineID)
+  }
+}
+
+query machines {
+  machines {
+    id
+    name
+  }
+}

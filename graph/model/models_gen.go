@@ -7,6 +7,58 @@ type HasID interface {
 	GetID() *string
 }
 
+// Headscale Machine
+type HMachine struct {
+	ID          int        `json:"id"`
+	IPAddresses []string   `json:"ip_addresses,omitempty"`
+	Name        string     `json:"name"`
+	LastSeen    *Timestamp `json:"last_seen,omitempty"`
+	ForcedTags  []string   `json:"forced_tags,omitempty"`
+	GivenName   string     `json:"given_name,omitempty"`
+	Online      bool       `json:"online"`
+	User        *HUser     `json:"user,omitempty"`
+	Routes      []*HRoute  `json:"routes"`
+}
+
+type HMachineMutation struct {
+	RenameMachine  *HMachine `json:"renameMachine"`
+	DeleteMachine  bool      `json:"deleteMachine"`
+	SetMachineTags *HMachine `json:"setMachineTags"`
+}
+
+type HRoute struct {
+	ID         int        `json:"id"`
+	Machine    *HMachine  `json:"machine,omitempty"`
+	Prefix     string     `json:"prefix"`
+	Advertised bool       `json:"advertised"`
+	Enabled    bool       `json:"enabled"`
+	IsPrimary  bool       `json:"is_primary,omitempty"`
+	CreatedAt  *Timestamp `json:"created_at,omitempty"`
+	UpdatedAt  *Timestamp `json:"updated_at,omitempty"`
+	DeletedAt  *Timestamp `json:"deleted_at,omitempty"`
+}
+
+type HRouteMutation struct {
+	EnableRoute bool `json:"enableRoute"`
+	DeleteRoute bool `json:"deleteRoute"`
+}
+
+// Headscale User
+type HUser struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type HeadscaleMutation struct {
+	Route   *HRouteMutation   `json:"route,omitempty"`
+	Machine *HMachineMutation `json:"machine,omitempty"`
+}
+
+type HeadscaleQuery struct {
+	Machines []*HMachine `json:"machines"`
+	Machine  *HMachine   `json:"machine,omitempty"`
+}
+
 // 机器
 type Machine struct {
 	ID *string `json:"id,omitempty" bson:"_id"`
@@ -99,4 +151,9 @@ type SyncResult struct {
 	Machine   *Machine `json:"machine,omitempty"`
 	// 路由是否启用
 	RouteEnable bool `json:"routeEnable"`
+}
+
+type Timestamp struct {
+	Seconds int `json:"seconds"`
+	Nanos   int `json:"nanos"`
 }

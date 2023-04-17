@@ -1,0 +1,81 @@
+mutation enableHRoute($routeId: Int!, $enable: Boolean!) {
+  headscale {
+    route {
+      enableRoute(routeId: $routeId, enable: $enable)
+    }
+  }
+}
+
+mutation deleteHRoute($routeId: Int!) {
+  headscale {
+    route {
+      deleteRoute(routeId: $routeId)
+    }
+  }
+}
+
+mutation renameHMachine($machineId: Int!, $newName: String!) {
+  headscale {
+    machine {
+      renameMachine(machineId: $machineId, name: $newName) {
+        ...HMachineResult
+      }
+    }
+  }
+}
+
+mutation deleteHMachine($machineID: Int!) {
+  headscale {
+    machine {
+      deleteMachine(machineId: $machineID)
+    }
+  }
+}
+
+mutation setHMachineTags($machineId: Int!, $tags: [String!]!) {
+  headscale {
+    machine {
+      setMachineTags(machineId: $machineId, tags: $tags) {
+        ...HMachineResult
+      }
+    }
+  }
+}
+
+fragment HMachineResult on HMachine {
+  id
+  name
+  ipAddresses
+  lastSeen {
+    seconds
+    nanos
+  }
+  forcedTags
+  givenName
+  online
+  user {
+    id
+    name
+  }
+  routes {
+    id
+    prefix
+    enabled
+  }
+}
+
+query hmachines {
+  headscale {
+    machines {
+      ...HMachineResult
+    }
+  }
+}
+
+query hmachine($machineId: Int!) {
+  headscale {
+    machine(machineId: $machineId) {
+      ...HMachineResult
+    }
+  }
+}

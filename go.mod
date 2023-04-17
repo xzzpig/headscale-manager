@@ -15,6 +15,7 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.7.0
 	google.golang.org/grpc v1.54.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
@@ -67,6 +68,5 @@ require (
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

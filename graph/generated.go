@@ -37,6 +37,11 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	HMachine() HMachineResolver
+	HMachineMutation() HMachineMutationResolver
+	HRoute() HRouteResolver
+	HRouteMutation() HRouteMutationResolver
+	HeadscaleQuery() HeadscaleQueryResolver
 	MachineMutation() MachineMutationResolver
 	Mutation() MutationResolver
 	Project() ProjectResolver
@@ -51,6 +56,56 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	HMachine struct {
+		ForcedTags  func(childComplexity int) int
+		GivenName   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		IPAddresses func(childComplexity int) int
+		LastSeen    func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Online      func(childComplexity int) int
+		Routes      func(childComplexity int) int
+		User        func(childComplexity int) int
+	}
+
+	HMachineMutation struct {
+		DeleteMachine  func(childComplexity int, machineID int) int
+		RenameMachine  func(childComplexity int, machineID int, name string) int
+		SetMachineTags func(childComplexity int, machineID int, tags []string) int
+	}
+
+	HRoute struct {
+		Advertised func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		DeletedAt  func(childComplexity int) int
+		Enabled    func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IsPrimary  func(childComplexity int) int
+		Machine    func(childComplexity int) int
+		Prefix     func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+	}
+
+	HRouteMutation struct {
+		DeleteRoute func(childComplexity int, routeID int) int
+		EnableRoute func(childComplexity int, routeID int, enable bool) int
+	}
+
+	HUser struct {
+		ID   func(childComplexity int) int
+		Name func(childComplexity int) int
+	}
+
+	HeadscaleMutation struct {
+		Machine func(childComplexity int) int
+		Route   func(childComplexity int) int
+	}
+
+	HeadscaleQuery struct {
+		Machine  func(childComplexity int, machineID int) int
+		Machines func(childComplexity int) int
+	}
+
 	Machine struct {
 		ID   func(childComplexity int) int
 		Name func(childComplexity int) int
@@ -62,9 +117,10 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		Machine func(childComplexity int) int
-		Project func(childComplexity int) int
-		Route   func(childComplexity int) int
+		Headscale func(childComplexity int) int
+		Machine   func(childComplexity int) int
+		Project   func(childComplexity int) int
+		Route     func(childComplexity int) int
 	}
 
 	Project struct {
@@ -85,9 +141,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Machines func(childComplexity int) int
-		Projects func(childComplexity int) int
-		Routes   func(childComplexity int) int
+		Headscale func(childComplexity int) int
+		Machines  func(childComplexity int) int
+		Projects  func(childComplexity int) int
+		Routes    func(childComplexity int) int
 	}
 
 	Route struct {
@@ -112,8 +169,32 @@ type ComplexityRoot struct {
 		RouteEnable func(childComplexity int) int
 		RouteID     func(childComplexity int) int
 	}
+
+	Timestamp struct {
+		Nanos   func(childComplexity int) int
+		Seconds func(childComplexity int) int
+	}
 }
 
+type HMachineResolver interface {
+	Routes(ctx context.Context, obj *model.HMachine) ([]*model.HRoute, error)
+}
+type HMachineMutationResolver interface {
+	RenameMachine(ctx context.Context, obj *model.HMachineMutation, machineID int, name string) (*model.HMachine, error)
+	DeleteMachine(ctx context.Context, obj *model.HMachineMutation, machineID int) (bool, error)
+	SetMachineTags(ctx context.Context, obj *model.HMachineMutation, machineID int, tags []string) (*model.HMachine, error)
+}
+type HRouteResolver interface {
+	Machine(ctx context.Context, obj *model.HRoute) (*model.HMachine, error)
+}
+type HRouteMutationResolver interface {
+	EnableRoute(ctx context.Context, obj *model.HRouteMutation, routeID int, enable bool) (bool, error)
+	DeleteRoute(ctx context.Context, obj *model.HRouteMutation, routeID int) (bool, error)
+}
+type HeadscaleQueryResolver interface {
+	Machines(ctx context.Context, obj *model.HeadscaleQuery) ([]*model.HMachine, error)
+	Machine(ctx context.Context, obj *model.HeadscaleQuery, machineID int) (*model.HMachine, error)
+}
 type MachineMutationResolver interface {
 	SaveMachine(ctx context.Context, obj *model.MachineMutation, machineInput *model.MachineInput) (*model.Machine, error)
 	DeleteMachine(ctx context.Context, obj *model.MachineMutation, id string) (int, error)
@@ -122,6 +203,7 @@ type MutationResolver interface {
 	Project(ctx context.Context) (*model.ProjectMutation, error)
 	Route(ctx context.Context) (*model.RouteMutation, error)
 	Machine(ctx context.Context) (*model.MachineMutation, error)
+	Headscale(ctx context.Context) (*model.HeadscaleMutation, error)
 }
 type ProjectResolver interface {
 	Machine(ctx context.Context, obj *model.Project) (*model.Machine, error)
@@ -138,6 +220,7 @@ type QueryResolver interface {
 	Projects(ctx context.Context) ([]*model.Project, error)
 	Machines(ctx context.Context) ([]*model.Machine, error)
 	Routes(ctx context.Context) ([]*model.Route, error)
+	Headscale(ctx context.Context) (*model.HeadscaleQuery, error)
 }
 type RouteResolver interface {
 	Project(ctx context.Context, obj *model.Route) (*model.Project, error)
@@ -168,6 +251,239 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "HMachine.forcedTags":
+		if e.complexity.HMachine.ForcedTags == nil {
+			break
+		}
+
+		return e.complexity.HMachine.ForcedTags(childComplexity), true
+
+	case "HMachine.givenName":
+		if e.complexity.HMachine.GivenName == nil {
+			break
+		}
+
+		return e.complexity.HMachine.GivenName(childComplexity), true
+
+	case "HMachine.id":
+		if e.complexity.HMachine.ID == nil {
+			break
+		}
+
+		return e.complexity.HMachine.ID(childComplexity), true
+
+	case "HMachine.ipAddresses":
+		if e.complexity.HMachine.IPAddresses == nil {
+			break
+		}
+
+		return e.complexity.HMachine.IPAddresses(childComplexity), true
+
+	case "HMachine.lastSeen":
+		if e.complexity.HMachine.LastSeen == nil {
+			break
+		}
+
+		return e.complexity.HMachine.LastSeen(childComplexity), true
+
+	case "HMachine.name":
+		if e.complexity.HMachine.Name == nil {
+			break
+		}
+
+		return e.complexity.HMachine.Name(childComplexity), true
+
+	case "HMachine.online":
+		if e.complexity.HMachine.Online == nil {
+			break
+		}
+
+		return e.complexity.HMachine.Online(childComplexity), true
+
+	case "HMachine.routes":
+		if e.complexity.HMachine.Routes == nil {
+			break
+		}
+
+		return e.complexity.HMachine.Routes(childComplexity), true
+
+	case "HMachine.user":
+		if e.complexity.HMachine.User == nil {
+			break
+		}
+
+		return e.complexity.HMachine.User(childComplexity), true
+
+	case "HMachineMutation.deleteMachine":
+		if e.complexity.HMachineMutation.DeleteMachine == nil {
+			break
+		}
+
+		args, err := ec.field_HMachineMutation_deleteMachine_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HMachineMutation.DeleteMachine(childComplexity, args["machineId"].(int)), true
+
+	case "HMachineMutation.renameMachine":
+		if e.complexity.HMachineMutation.RenameMachine == nil {
+			break
+		}
+
+		args, err := ec.field_HMachineMutation_renameMachine_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HMachineMutation.RenameMachine(childComplexity, args["machineId"].(int), args["name"].(string)), true
+
+	case "HMachineMutation.setMachineTags":
+		if e.complexity.HMachineMutation.SetMachineTags == nil {
+			break
+		}
+
+		args, err := ec.field_HMachineMutation_setMachineTags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HMachineMutation.SetMachineTags(childComplexity, args["machineId"].(int), args["tags"].([]string)), true
+
+	case "HRoute.advertised":
+		if e.complexity.HRoute.Advertised == nil {
+			break
+		}
+
+		return e.complexity.HRoute.Advertised(childComplexity), true
+
+	case "HRoute.createdAt":
+		if e.complexity.HRoute.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.HRoute.CreatedAt(childComplexity), true
+
+	case "HRoute.deletedAt":
+		if e.complexity.HRoute.DeletedAt == nil {
+			break
+		}
+
+		return e.complexity.HRoute.DeletedAt(childComplexity), true
+
+	case "HRoute.enabled":
+		if e.complexity.HRoute.Enabled == nil {
+			break
+		}
+
+		return e.complexity.HRoute.Enabled(childComplexity), true
+
+	case "HRoute.id":
+		if e.complexity.HRoute.ID == nil {
+			break
+		}
+
+		return e.complexity.HRoute.ID(childComplexity), true
+
+	case "HRoute.isPrimary":
+		if e.complexity.HRoute.IsPrimary == nil {
+			break
+		}
+
+		return e.complexity.HRoute.IsPrimary(childComplexity), true
+
+	case "HRoute.machine":
+		if e.complexity.HRoute.Machine == nil {
+			break
+		}
+
+		return e.complexity.HRoute.Machine(childComplexity), true
+
+	case "HRoute.prefix":
+		if e.complexity.HRoute.Prefix == nil {
+			break
+		}
+
+		return e.complexity.HRoute.Prefix(childComplexity), true
+
+	case "HRoute.updatedAt":
+		if e.complexity.HRoute.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.HRoute.UpdatedAt(childComplexity), true
+
+	case "HRouteMutation.deleteRoute":
+		if e.complexity.HRouteMutation.DeleteRoute == nil {
+			break
+		}
+
+		args, err := ec.field_HRouteMutation_deleteRoute_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HRouteMutation.DeleteRoute(childComplexity, args["routeId"].(int)), true
+
+	case "HRouteMutation.enableRoute":
+		if e.complexity.HRouteMutation.EnableRoute == nil {
+			break
+		}
+
+		args, err := ec.field_HRouteMutation_enableRoute_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HRouteMutation.EnableRoute(childComplexity, args["routeId"].(int), args["enable"].(bool)), true
+
+	case "HUser.id":
+		if e.complexity.HUser.ID == nil {
+			break
+		}
+
+		return e.complexity.HUser.ID(childComplexity), true
+
+	case "HUser.name":
+		if e.complexity.HUser.Name == nil {
+			break
+		}
+
+		return e.complexity.HUser.Name(childComplexity), true
+
+	case "HeadscaleMutation.machine":
+		if e.complexity.HeadscaleMutation.Machine == nil {
+			break
+		}
+
+		return e.complexity.HeadscaleMutation.Machine(childComplexity), true
+
+	case "HeadscaleMutation.route":
+		if e.complexity.HeadscaleMutation.Route == nil {
+			break
+		}
+
+		return e.complexity.HeadscaleMutation.Route(childComplexity), true
+
+	case "HeadscaleQuery.machine":
+		if e.complexity.HeadscaleQuery.Machine == nil {
+			break
+		}
+
+		args, err := ec.field_HeadscaleQuery_machine_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HeadscaleQuery.Machine(childComplexity, args["machineId"].(int)), true
+
+	case "HeadscaleQuery.machines":
+		if e.complexity.HeadscaleQuery.Machines == nil {
+			break
+		}
+
+		return e.complexity.HeadscaleQuery.Machines(childComplexity), true
 
 	case "Machine.id":
 		if e.complexity.Machine.ID == nil {
@@ -206,6 +522,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MachineMutation.SaveMachine(childComplexity, args["machineInput"].(*model.MachineInput)), true
+
+	case "Mutation.headscale":
+		if e.complexity.Mutation.Headscale == nil {
+			break
+		}
+
+		return e.complexity.Mutation.Headscale(childComplexity), true
 
 	case "Mutation.machine":
 		if e.complexity.Mutation.Machine == nil {
@@ -319,6 +642,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProjectMutation.SyncProjectRoute(childComplexity, args["projectID"].(*string)), true
+
+	case "Query.headscale":
+		if e.complexity.Query.Headscale == nil {
+			break
+		}
+
+		return e.complexity.Query.Headscale(childComplexity), true
 
 	case "Query.machines":
 		if e.complexity.Query.Machines == nil {
@@ -449,6 +779,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SyncResult.RouteID(childComplexity), true
 
+	case "Timestamp.nanos":
+		if e.complexity.Timestamp.Nanos == nil {
+			break
+		}
+
+		return e.complexity.Timestamp.Nanos(childComplexity), true
+
+	case "Timestamp.seconds":
+		if e.complexity.Timestamp.Seconds == nil {
+			break
+		}
+
+		return e.complexity.Timestamp.Seconds(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -538,6 +882,123 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_HMachineMutation_deleteMachine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["machineId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["machineId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_HMachineMutation_renameMachine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["machineId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["machineId"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_HMachineMutation_setMachineTags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["machineId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["machineId"] = arg0
+	var arg1 []string
+	if tmp, ok := rawArgs["tags"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+		arg1, err = ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["tags"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_HRouteMutation_deleteRoute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["routeId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routeId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["routeId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_HRouteMutation_enableRoute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["routeId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routeId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["routeId"] = arg0
+	var arg1 bool
+	if tmp, ok := rawArgs["enable"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enable"))
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["enable"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_HeadscaleQuery_machine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["machineId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["machineId"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_MachineMutation_deleteMachine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -696,6 +1157,1485 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _HMachine_id(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_ipAddresses(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_ipAddresses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IPAddresses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_ipAddresses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_name(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_lastSeen(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_lastSeen(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastSeen, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Timestamp)
+	fc.Result = res
+	return ec.marshalOTimestamp2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_lastSeen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "seconds":
+				return ec.fieldContext_Timestamp_seconds(ctx, field)
+			case "nanos":
+				return ec.fieldContext_Timestamp_nanos(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Timestamp", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_forcedTags(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_forcedTags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ForcedTags, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_forcedTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_givenName(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_givenName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GivenName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_givenName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_online(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_online(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Online, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_online(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_user(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HUser)
+	fc.Result = res
+	return ec.marshalOHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HUser_id(ctx, field)
+			case "name":
+				return ec.fieldContext_HUser_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HUser", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachine_routes(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachine_routes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HMachine().Routes(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.HRoute)
+	fc.Result = res
+	return ec.marshalNHRoute2ᚕᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHRouteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachine_routes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachine",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HRoute_id(ctx, field)
+			case "machine":
+				return ec.fieldContext_HRoute_machine(ctx, field)
+			case "prefix":
+				return ec.fieldContext_HRoute_prefix(ctx, field)
+			case "advertised":
+				return ec.fieldContext_HRoute_advertised(ctx, field)
+			case "enabled":
+				return ec.fieldContext_HRoute_enabled(ctx, field)
+			case "isPrimary":
+				return ec.fieldContext_HRoute_isPrimary(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_HRoute_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_HRoute_updatedAt(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_HRoute_deletedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HRoute", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachineMutation_renameMachine(ctx context.Context, field graphql.CollectedField, obj *model.HMachineMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachineMutation_renameMachine(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HMachineMutation().RenameMachine(rctx, obj, fc.Args["machineId"].(int), fc.Args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.HMachine)
+	fc.Result = res
+	return ec.marshalNHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachineMutation_renameMachine(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachineMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HMachine_id(ctx, field)
+			case "ipAddresses":
+				return ec.fieldContext_HMachine_ipAddresses(ctx, field)
+			case "name":
+				return ec.fieldContext_HMachine_name(ctx, field)
+			case "lastSeen":
+				return ec.fieldContext_HMachine_lastSeen(ctx, field)
+			case "forcedTags":
+				return ec.fieldContext_HMachine_forcedTags(ctx, field)
+			case "givenName":
+				return ec.fieldContext_HMachine_givenName(ctx, field)
+			case "online":
+				return ec.fieldContext_HMachine_online(ctx, field)
+			case "user":
+				return ec.fieldContext_HMachine_user(ctx, field)
+			case "routes":
+				return ec.fieldContext_HMachine_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HMachine", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HMachineMutation_renameMachine_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachineMutation_deleteMachine(ctx context.Context, field graphql.CollectedField, obj *model.HMachineMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachineMutation_deleteMachine(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HMachineMutation().DeleteMachine(rctx, obj, fc.Args["machineId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachineMutation_deleteMachine(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachineMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HMachineMutation_deleteMachine_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HMachineMutation_setMachineTags(ctx context.Context, field graphql.CollectedField, obj *model.HMachineMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HMachineMutation_setMachineTags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HMachineMutation().SetMachineTags(rctx, obj, fc.Args["machineId"].(int), fc.Args["tags"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.HMachine)
+	fc.Result = res
+	return ec.marshalNHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HMachineMutation_setMachineTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HMachineMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HMachine_id(ctx, field)
+			case "ipAddresses":
+				return ec.fieldContext_HMachine_ipAddresses(ctx, field)
+			case "name":
+				return ec.fieldContext_HMachine_name(ctx, field)
+			case "lastSeen":
+				return ec.fieldContext_HMachine_lastSeen(ctx, field)
+			case "forcedTags":
+				return ec.fieldContext_HMachine_forcedTags(ctx, field)
+			case "givenName":
+				return ec.fieldContext_HMachine_givenName(ctx, field)
+			case "online":
+				return ec.fieldContext_HMachine_online(ctx, field)
+			case "user":
+				return ec.fieldContext_HMachine_user(ctx, field)
+			case "routes":
+				return ec.fieldContext_HMachine_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HMachine", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HMachineMutation_setMachineTags_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_id(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_machine(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_machine(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HRoute().Machine(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HMachine)
+	fc.Result = res
+	return ec.marshalOHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_machine(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HMachine_id(ctx, field)
+			case "ipAddresses":
+				return ec.fieldContext_HMachine_ipAddresses(ctx, field)
+			case "name":
+				return ec.fieldContext_HMachine_name(ctx, field)
+			case "lastSeen":
+				return ec.fieldContext_HMachine_lastSeen(ctx, field)
+			case "forcedTags":
+				return ec.fieldContext_HMachine_forcedTags(ctx, field)
+			case "givenName":
+				return ec.fieldContext_HMachine_givenName(ctx, field)
+			case "online":
+				return ec.fieldContext_HMachine_online(ctx, field)
+			case "user":
+				return ec.fieldContext_HMachine_user(ctx, field)
+			case "routes":
+				return ec.fieldContext_HMachine_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HMachine", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_prefix(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_prefix(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Prefix, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_prefix(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_advertised(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_advertised(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Advertised, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_advertised(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_enabled(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_isPrimary(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_isPrimary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsPrimary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_isPrimary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Timestamp)
+	fc.Result = res
+	return ec.marshalOTimestamp2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "seconds":
+				return ec.fieldContext_Timestamp_seconds(ctx, field)
+			case "nanos":
+				return ec.fieldContext_Timestamp_nanos(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Timestamp", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Timestamp)
+	fc.Result = res
+	return ec.marshalOTimestamp2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "seconds":
+				return ec.fieldContext_Timestamp_seconds(ctx, field)
+			case "nanos":
+				return ec.fieldContext_Timestamp_nanos(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Timestamp", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRoute_deletedAt(ctx context.Context, field graphql.CollectedField, obj *model.HRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRoute_deletedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Timestamp)
+	fc.Result = res
+	return ec.marshalOTimestamp2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRoute_deletedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "seconds":
+				return ec.fieldContext_Timestamp_seconds(ctx, field)
+			case "nanos":
+				return ec.fieldContext_Timestamp_nanos(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Timestamp", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRouteMutation_enableRoute(ctx context.Context, field graphql.CollectedField, obj *model.HRouteMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRouteMutation_enableRoute(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HRouteMutation().EnableRoute(rctx, obj, fc.Args["routeId"].(int), fc.Args["enable"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRouteMutation_enableRoute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRouteMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HRouteMutation_enableRoute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HRouteMutation_deleteRoute(ctx context.Context, field graphql.CollectedField, obj *model.HRouteMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HRouteMutation_deleteRoute(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HRouteMutation().DeleteRoute(rctx, obj, fc.Args["routeId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HRouteMutation_deleteRoute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HRouteMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HRouteMutation_deleteRoute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HUser_id(ctx context.Context, field graphql.CollectedField, obj *model.HUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HUser_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HUser_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HUser_name(ctx context.Context, field graphql.CollectedField, obj *model.HUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HUser_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HUser_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HeadscaleMutation_route(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HeadscaleMutation_route(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Route, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HRouteMutation)
+	fc.Result = res
+	return ec.marshalOHRouteMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHRouteMutation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HeadscaleMutation_route(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HeadscaleMutation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "enableRoute":
+				return ec.fieldContext_HRouteMutation_enableRoute(ctx, field)
+			case "deleteRoute":
+				return ec.fieldContext_HRouteMutation_deleteRoute(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HRouteMutation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HeadscaleMutation_machine(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HeadscaleMutation_machine(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Machine, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HMachineMutation)
+	fc.Result = res
+	return ec.marshalOHMachineMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachineMutation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HeadscaleMutation_machine(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HeadscaleMutation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "renameMachine":
+				return ec.fieldContext_HMachineMutation_renameMachine(ctx, field)
+			case "deleteMachine":
+				return ec.fieldContext_HMachineMutation_deleteMachine(ctx, field)
+			case "setMachineTags":
+				return ec.fieldContext_HMachineMutation_setMachineTags(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HMachineMutation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HeadscaleQuery_machines(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HeadscaleQuery_machines(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HeadscaleQuery().Machines(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.HMachine)
+	fc.Result = res
+	return ec.marshalNHMachine2ᚕᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachineᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HeadscaleQuery_machines(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HeadscaleQuery",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HMachine_id(ctx, field)
+			case "ipAddresses":
+				return ec.fieldContext_HMachine_ipAddresses(ctx, field)
+			case "name":
+				return ec.fieldContext_HMachine_name(ctx, field)
+			case "lastSeen":
+				return ec.fieldContext_HMachine_lastSeen(ctx, field)
+			case "forcedTags":
+				return ec.fieldContext_HMachine_forcedTags(ctx, field)
+			case "givenName":
+				return ec.fieldContext_HMachine_givenName(ctx, field)
+			case "online":
+				return ec.fieldContext_HMachine_online(ctx, field)
+			case "user":
+				return ec.fieldContext_HMachine_user(ctx, field)
+			case "routes":
+				return ec.fieldContext_HMachine_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HMachine", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HeadscaleQuery_machine(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HeadscaleQuery_machine(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HeadscaleQuery().Machine(rctx, obj, fc.Args["machineId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HMachine)
+	fc.Result = res
+	return ec.marshalOHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HeadscaleQuery_machine(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HeadscaleQuery",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HMachine_id(ctx, field)
+			case "ipAddresses":
+				return ec.fieldContext_HMachine_ipAddresses(ctx, field)
+			case "name":
+				return ec.fieldContext_HMachine_name(ctx, field)
+			case "lastSeen":
+				return ec.fieldContext_HMachine_lastSeen(ctx, field)
+			case "forcedTags":
+				return ec.fieldContext_HMachine_forcedTags(ctx, field)
+			case "givenName":
+				return ec.fieldContext_HMachine_givenName(ctx, field)
+			case "online":
+				return ec.fieldContext_HMachine_online(ctx, field)
+			case "user":
+				return ec.fieldContext_HMachine_user(ctx, field)
+			case "routes":
+				return ec.fieldContext_HMachine_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HMachine", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HeadscaleQuery_machine_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Machine_id(ctx context.Context, field graphql.CollectedField, obj *model.Machine) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Machine_id(ctx, field)
@@ -1030,6 +2970,53 @@ func (ec *executionContext) fieldContext_Mutation_machine(ctx context.Context, f
 				return ec.fieldContext_MachineMutation_deleteMachine(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MachineMutation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_headscale(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_headscale(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Headscale(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HeadscaleMutation)
+	fc.Result = res
+	return ec.marshalOHeadscaleMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHeadscaleMutation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_headscale(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "route":
+				return ec.fieldContext_HeadscaleMutation_route(ctx, field)
+			case "machine":
+				return ec.fieldContext_HeadscaleMutation_machine(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HeadscaleMutation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1734,6 +3721,53 @@ func (ec *executionContext) fieldContext_Query_routes(ctx context.Context, field
 				return ec.fieldContext_Route_projectID(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Route", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_headscale(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_headscale(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Headscale(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HeadscaleQuery)
+	fc.Result = res
+	return ec.marshalOHeadscaleQuery2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHeadscaleQuery(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_headscale(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "machines":
+				return ec.fieldContext_HeadscaleQuery_machines(ctx, field)
+			case "machine":
+				return ec.fieldContext_HeadscaleQuery_machine(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HeadscaleQuery", field.Name)
 		},
 	}
 	return fc, nil
@@ -2540,6 +4574,94 @@ func (ec *executionContext) fieldContext_SyncResult_routeEnable(ctx context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Timestamp_seconds(ctx context.Context, field graphql.CollectedField, obj *model.Timestamp) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Timestamp_seconds(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Seconds, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Timestamp_seconds(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Timestamp",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Timestamp_nanos(ctx context.Context, field graphql.CollectedField, obj *model.Timestamp) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Timestamp_nanos(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nanos, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Timestamp_nanos(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Timestamp",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4504,6 +6626,446 @@ func (ec *executionContext) _HasID(ctx context.Context, sel ast.SelectionSet, ob
 
 // region    **************************** object.gotpl ****************************
 
+var hMachineImplementors = []string{"HMachine"}
+
+func (ec *executionContext) _HMachine(ctx context.Context, sel ast.SelectionSet, obj *model.HMachine) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hMachineImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HMachine")
+		case "id":
+
+			out.Values[i] = ec._HMachine_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "ipAddresses":
+
+			out.Values[i] = ec._HMachine_ipAddresses(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "name":
+
+			out.Values[i] = ec._HMachine_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "lastSeen":
+
+			out.Values[i] = ec._HMachine_lastSeen(ctx, field, obj)
+
+		case "forcedTags":
+
+			out.Values[i] = ec._HMachine_forcedTags(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "givenName":
+
+			out.Values[i] = ec._HMachine_givenName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "online":
+
+			out.Values[i] = ec._HMachine_online(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "user":
+
+			out.Values[i] = ec._HMachine_user(ctx, field, obj)
+
+		case "routes":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HMachine_routes(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var hMachineMutationImplementors = []string{"HMachineMutation"}
+
+func (ec *executionContext) _HMachineMutation(ctx context.Context, sel ast.SelectionSet, obj *model.HMachineMutation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hMachineMutationImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HMachineMutation")
+		case "renameMachine":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HMachineMutation_renameMachine(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "deleteMachine":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HMachineMutation_deleteMachine(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "setMachineTags":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HMachineMutation_setMachineTags(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var hRouteImplementors = []string{"HRoute"}
+
+func (ec *executionContext) _HRoute(ctx context.Context, sel ast.SelectionSet, obj *model.HRoute) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hRouteImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HRoute")
+		case "id":
+
+			out.Values[i] = ec._HRoute_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "machine":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HRoute_machine(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "prefix":
+
+			out.Values[i] = ec._HRoute_prefix(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "advertised":
+
+			out.Values[i] = ec._HRoute_advertised(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "enabled":
+
+			out.Values[i] = ec._HRoute_enabled(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "isPrimary":
+
+			out.Values[i] = ec._HRoute_isPrimary(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "createdAt":
+
+			out.Values[i] = ec._HRoute_createdAt(ctx, field, obj)
+
+		case "updatedAt":
+
+			out.Values[i] = ec._HRoute_updatedAt(ctx, field, obj)
+
+		case "deletedAt":
+
+			out.Values[i] = ec._HRoute_deletedAt(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var hRouteMutationImplementors = []string{"HRouteMutation"}
+
+func (ec *executionContext) _HRouteMutation(ctx context.Context, sel ast.SelectionSet, obj *model.HRouteMutation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hRouteMutationImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HRouteMutation")
+		case "enableRoute":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HRouteMutation_enableRoute(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "deleteRoute":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HRouteMutation_deleteRoute(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var hUserImplementors = []string{"HUser"}
+
+func (ec *executionContext) _HUser(ctx context.Context, sel ast.SelectionSet, obj *model.HUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hUserImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HUser")
+		case "id":
+
+			out.Values[i] = ec._HUser_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+
+			out.Values[i] = ec._HUser_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var headscaleMutationImplementors = []string{"HeadscaleMutation"}
+
+func (ec *executionContext) _HeadscaleMutation(ctx context.Context, sel ast.SelectionSet, obj *model.HeadscaleMutation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, headscaleMutationImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HeadscaleMutation")
+		case "route":
+
+			out.Values[i] = ec._HeadscaleMutation_route(ctx, field, obj)
+
+		case "machine":
+
+			out.Values[i] = ec._HeadscaleMutation_machine(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var headscaleQueryImplementors = []string{"HeadscaleQuery"}
+
+func (ec *executionContext) _HeadscaleQuery(ctx context.Context, sel ast.SelectionSet, obj *model.HeadscaleQuery) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, headscaleQueryImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HeadscaleQuery")
+		case "machines":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HeadscaleQuery_machines(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "machine":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HeadscaleQuery_machine(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var machineImplementors = []string{"Machine", "HasID"}
 
 func (ec *executionContext) _Machine(ctx context.Context, sel ast.SelectionSet, obj *model.Machine) graphql.Marshaler {
@@ -4626,6 +7188,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_machine(ctx, field)
+			})
+
+		case "headscale":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_headscale(ctx, field)
 			})
 
 		default:
@@ -4885,6 +7453,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "headscale":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_headscale(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -5108,6 +7696,41 @@ func (ec *executionContext) _SyncResult(ctx context.Context, sel ast.SelectionSe
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var timestampImplementors = []string{"Timestamp"}
+
+func (ec *executionContext) _Timestamp(ctx context.Context, sel ast.SelectionSet, obj *model.Timestamp) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, timestampImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Timestamp")
+		case "seconds":
+
+			out.Values[i] = ec._Timestamp_seconds(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nanos":
+
+			out.Values[i] = ec._Timestamp_nanos(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -5453,6 +8076,118 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNHMachine2githubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx context.Context, sel ast.SelectionSet, v model.HMachine) graphql.Marshaler {
+	return ec._HMachine(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHMachine2ᚕᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachineᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HMachine) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx context.Context, sel ast.SelectionSet, v *model.HMachine) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HMachine(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNHRoute2ᚕᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHRouteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HRoute) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNHRoute2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHRoute(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHRoute2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHRoute(ctx context.Context, sel ast.SelectionSet, v *model.HRoute) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HRoute(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5496,6 +8231,38 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNSyncResult2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐSyncResult(ctx context.Context, sel ast.SelectionSet, v *model.SyncResult) graphql.Marshaler {
@@ -5785,6 +8552,48 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOHMachine2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachine(ctx context.Context, sel ast.SelectionSet, v *model.HMachine) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HMachine(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHMachineMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHMachineMutation(ctx context.Context, sel ast.SelectionSet, v *model.HMachineMutation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HMachineMutation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHRouteMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHRouteMutation(ctx context.Context, sel ast.SelectionSet, v *model.HRouteMutation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HRouteMutation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx context.Context, sel ast.SelectionSet, v *model.HUser) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HUser(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHeadscaleMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHeadscaleMutation(ctx context.Context, sel ast.SelectionSet, v *model.HeadscaleMutation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HeadscaleMutation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHeadscaleQuery2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHeadscaleQuery(ctx context.Context, sel ast.SelectionSet, v *model.HeadscaleQuery) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HeadscaleQuery(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
@@ -6117,6 +8926,13 @@ func (ec *executionContext) marshalOSyncResult2ᚕᚖgithubᚗcomᚋxzzpigᚋhea
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOTimestamp2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐTimestamp(ctx context.Context, sel ast.SelectionSet, v *model.Timestamp) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Timestamp(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

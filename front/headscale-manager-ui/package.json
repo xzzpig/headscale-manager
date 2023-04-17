@@ -7,7 +7,8 @@
     "format": "prettier --cache --write .",
     "postinstall": "max setup",
     "setup": "max setup",
-    "start": "npm run dev"
+    "start": "npm run dev",
+    "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
@@ -16,9 +17,15 @@
     "@umijs/max": "^4.0.64",
     "antd": "^5.0.0",
     "apollo-boost": "^0.4.9",
-    "graphql": "^16.6.0"
+    "graphql": "^16.6.0",
+    "lodah": "^0.0.1-security",
+    "moment": "^2.29.4"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "3.3.0",
+    "@graphql-codegen/typescript-operations": "^3.0.3",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.7",
+    "@types/lodash": "^4.14.194",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "lint-staged": "^13.0.3",

@@ -58,7 +58,7 @@ const MachineTable: React.FC = (props) => {
         try {
             return await refetch();
         } catch (e: any) {
-            message.error('刷新失败:' + (e?.message ?? e));
+            messageApi.error('刷新失败:' + (e?.message ?? e));
             setMachines([])
         } finally {
             setRefreshing(false);
@@ -106,7 +106,7 @@ const MachineTable: React.FC = (props) => {
                                 }
                             },
                             onError: (e) => {
-                                message.error('保存失败:' + (e.message))
+                                messageApi.error('保存失败:' + (e.message))
                             }
                         })
                         await doRefresh()
@@ -118,7 +118,7 @@ const MachineTable: React.FC = (props) => {
                                 machineID: row.id!!
                             },
                             onError: (e) => {
-                                message.error('删除失败:' + (e.message))
+                                messageApi.error('删除失败:' + (e.message))
                             }
                         })
                         await doRefresh()

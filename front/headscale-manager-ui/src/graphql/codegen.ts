@@ -15,36 +15,100 @@ export type Scalars = {
   Float: number;
 };
 
-/** 路由 */
-export type Route = HasId & {
-  __typename?: 'Route';
-  id?: Maybe<Scalars['ID']>;
-  /** 地址 */
-  name?: Maybe<Scalars['String']>;
-  /** 描述 */
-  description?: Maybe<Scalars['String']>;
-  /** 项目 */
-  project?: Maybe<Project>;
-  projectID?: Maybe<Scalars['ID']>;
+/** Headscale Machine */
+export type HMachine = {
+  __typename?: 'HMachine';
+  forcedTags: Array<Scalars['String']>;
+  givenName: Scalars['String'];
+  id: Scalars['Int'];
+  ipAddresses: Array<Scalars['String']>;
+  lastSeen?: Maybe<Timestamp>;
+  name: Scalars['String'];
+  online: Scalars['Boolean'];
+  routes: Array<HRoute>;
+  user?: Maybe<HUser>;
 };
 
-/** 项目 */
-export type Project = HasId & {
-  __typename?: 'Project';
+export type HMachineMutation = {
+  __typename?: 'HMachineMutation';
+  deleteMachine: Scalars['Boolean'];
+  renameMachine: HMachine;
+  setMachineTags: HMachine;
+};
+
+
+export type HMachineMutationDeleteMachineArgs = {
+  machineId: Scalars['Int'];
+};
+
+
+export type HMachineMutationRenameMachineArgs = {
+  machineId: Scalars['Int'];
+  name: Scalars['String'];
+};
+
+
+export type HMachineMutationSetMachineTagsArgs = {
+  machineId: Scalars['Int'];
+  tags: Array<Scalars['String']>;
+};
+
+export type HRoute = {
+  __typename?: 'HRoute';
+  advertised: Scalars['Boolean'];
+  createdAt?: Maybe<Timestamp>;
+  deletedAt?: Maybe<Timestamp>;
+  enabled: Scalars['Boolean'];
+  id: Scalars['Int'];
+  isPrimary: Scalars['Boolean'];
+  machine?: Maybe<HMachine>;
+  prefix: Scalars['String'];
+  updatedAt?: Maybe<Timestamp>;
+};
+
+export type HRouteMutation = {
+  __typename?: 'HRouteMutation';
+  deleteRoute: Scalars['Boolean'];
+  enableRoute: Scalars['Boolean'];
+};
+
+
+export type HRouteMutationDeleteRouteArgs = {
+  routeId: Scalars['Int'];
+};
+
+
+export type HRouteMutationEnableRouteArgs = {
+  enable: Scalars['Boolean'];
+  routeId: Scalars['Int'];
+};
+
+/** Headscale User */
+export type HUser = {
+  __typename?: 'HUser';
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type HasId = {
   id?: Maybe<Scalars['ID']>;
-  /** 项目编码 */
-  code?: Maybe<Scalars['String']>;
-  /** 项目名称 */
-  name?: Maybe<Scalars['String']>;
-  /** 当前机器 */
-  machine?: Maybe<Machine>;
-  /** 可用机器 */
-  machines?: Maybe<Array<Maybe<Machine>>>;
-  /** 当前机器ID */
-  machineID?: Maybe<Scalars['ID']>;
-  /** 可用机器ID */
-  machineIDs?: Maybe<Array<Maybe<Scalars['ID']>>>;
-  routes?: Maybe<Array<Maybe<Route>>>;
+};
+
+export type HeadscaleMutation = {
+  __typename?: 'HeadscaleMutation';
+  machine?: Maybe<HMachineMutation>;
+  route?: Maybe<HRouteMutation>;
+};
+
+export type HeadscaleQuery = {
+  __typename?: 'HeadscaleQuery';
+  machine?: Maybe<HMachine>;
+  machines: Array<HMachine>;
+};
+
+
+export type HeadscaleQueryMachineArgs = {
+  machineId: Scalars['Int'];
 };
 
 /** 机器 */
@@ -55,43 +119,67 @@ export type Machine = HasId & {
   name?: Maybe<Scalars['String']>;
 };
 
-/** 项目路由同步结果 */
-export type SyncResult = {
-  __typename?: 'SyncResult';
-  projectID: Scalars['ID'];
-  project?: Maybe<Project>;
-  routeID: Scalars['ID'];
-  route?: Maybe<Route>;
-  machineID: Scalars['ID'];
-  machine?: Maybe<Machine>;
-  /** 路由是否启用 */
-  routeEnable: Scalars['Boolean'];
+export type MachineInput = {
+  id?: InputMaybe<Scalars['ID']>;
+  name?: InputMaybe<Scalars['String']>;
 };
 
-export type Query = {
-  __typename?: 'Query';
-  projects?: Maybe<Array<Maybe<Project>>>;
-  machines?: Maybe<Array<Maybe<Machine>>>;
-  routes?: Maybe<Array<Maybe<Route>>>;
+export type MachineMutation = {
+  __typename?: 'MachineMutation';
+  deleteMachine: Scalars['Int'];
+  saveMachine?: Maybe<Machine>;
+};
+
+
+export type MachineMutationDeleteMachineArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type MachineMutationSaveMachineArgs = {
+  machineInput?: InputMaybe<MachineInput>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
+  headscale?: Maybe<HeadscaleMutation>;
+  machine?: Maybe<MachineMutation>;
   project?: Maybe<ProjectMutation>;
   route?: Maybe<RouteMutation>;
-  machine?: Maybe<MachineMutation>;
+};
+
+/** 项目 */
+export type Project = HasId & {
+  __typename?: 'Project';
+  /** 项目编码 */
+  code?: Maybe<Scalars['String']>;
+  id?: Maybe<Scalars['ID']>;
+  /** 当前机器 */
+  machine?: Maybe<Machine>;
+  /** 当前机器ID */
+  machineID?: Maybe<Scalars['ID']>;
+  /** 可用机器ID */
+  machineIDs?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  /** 可用机器 */
+  machines?: Maybe<Array<Maybe<Machine>>>;
+  /** 项目名称 */
+  name?: Maybe<Scalars['String']>;
+  routes?: Maybe<Array<Maybe<Route>>>;
+};
+
+export type ProjectInput = {
+  code?: InputMaybe<Scalars['String']>;
+  id?: InputMaybe<Scalars['ID']>;
+  machineID?: InputMaybe<Scalars['ID']>;
+  machineIDs?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
+  name?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectMutation = {
   __typename?: 'ProjectMutation';
-  saveProject?: Maybe<Project>;
   deleteProject: Scalars['Int'];
+  saveProject?: Maybe<Project>;
   syncProjectRoute?: Maybe<Array<SyncResult>>;
-};
-
-
-export type ProjectMutationSaveProjectArgs = {
-  projectInput?: InputMaybe<ProjectInput>;
 };
 
 
@@ -100,19 +188,47 @@ export type ProjectMutationDeleteProjectArgs = {
 };
 
 
+export type ProjectMutationSaveProjectArgs = {
+  projectInput?: InputMaybe<ProjectInput>;
+};
+
+
 export type ProjectMutationSyncProjectRouteArgs = {
+  projectID?: InputMaybe<Scalars['ID']>;
+};
+
+export type Query = {
+  __typename?: 'Query';
+  headscale?: Maybe<HeadscaleQuery>;
+  machines?: Maybe<Array<Maybe<Machine>>>;
+  projects?: Maybe<Array<Maybe<Project>>>;
+  routes?: Maybe<Array<Maybe<Route>>>;
+};
+
+/** 路由 */
+export type Route = HasId & {
+  __typename?: 'Route';
+  /** 描述 */
+  description?: Maybe<Scalars['String']>;
+  id?: Maybe<Scalars['ID']>;
+  /** 地址 */
+  name?: Maybe<Scalars['String']>;
+  /** 项目 */
+  project?: Maybe<Project>;
+  projectID?: Maybe<Scalars['ID']>;
+};
+
+export type RouteInput = {
+  description?: InputMaybe<Scalars['String']>;
+  id?: InputMaybe<Scalars['ID']>;
+  name?: InputMaybe<Scalars['String']>;
   projectID?: InputMaybe<Scalars['ID']>;
 };
 
 export type RouteMutation = {
   __typename?: 'RouteMutation';
-  saveRoute?: Maybe<Route>;
   deleteRoute: Scalars['Int'];
-};
-
-
-export type RouteMutationSaveRouteArgs = {
-  routeInput?: InputMaybe<RouteInput>;
+  saveRoute?: Maybe<Route>;
 };
 
 
@@ -120,45 +236,100 @@ export type RouteMutationDeleteRouteArgs = {
   id: Scalars['ID'];
 };
 
-export type MachineMutation = {
-  __typename?: 'MachineMutation';
-  saveMachine?: Maybe<Machine>;
-  deleteMachine: Scalars['Int'];
+
+export type RouteMutationSaveRouteArgs = {
+  routeInput?: InputMaybe<RouteInput>;
 };
 
+/** 项目路由同步结果 */
+export type SyncResult = {
+  __typename?: 'SyncResult';
+  machine?: Maybe<Machine>;
+  machineID: Scalars['ID'];
+  project?: Maybe<Project>;
+  projectID: Scalars['ID'];
+  route?: Maybe<Route>;
+  /** 路由是否启用 */
+  routeEnable: Scalars['Boolean'];
+  routeID: Scalars['ID'];
+};
 
-export type MachineMutationSaveMachineArgs = {
+export type Timestamp = {
+  __typename?: 'Timestamp';
+  nanos: Scalars['Int'];
+  seconds: Scalars['Int'];
+};
+
+export type EnableHRouteMutationVariables = Exact<{
+  routeId: Scalars['Int'];
+  enable: Scalars['Boolean'];
+}>;
+
+
+export type EnableHRouteMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', route?: { __typename?: 'HRouteMutation', enableRoute: boolean } | null } | null };
+
+export type DeleteHRouteMutationVariables = Exact<{
+  routeId: Scalars['Int'];
+}>;
+
+
+export type DeleteHRouteMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', route?: { __typename?: 'HRouteMutation', deleteRoute: boolean } | null } | null };
+
+export type RenameHMachineMutationVariables = Exact<{
+  machineId: Scalars['Int'];
+  newName: Scalars['String'];
+}>;
+
+
+export type RenameHMachineMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', machine?: { __typename?: 'HMachineMutation', renameMachine: { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> } } | null } | null };
+
+export type DeleteHMachineMutationVariables = Exact<{
+  machineID: Scalars['Int'];
+}>;
+
+
+export type DeleteHMachineMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', machine?: { __typename?: 'HMachineMutation', deleteMachine: boolean } | null } | null };
+
+export type SetHMachineTagsMutationVariables = Exact<{
+  machineId: Scalars['Int'];
+  tags: Array<Scalars['String']> | Scalars['String'];
+}>;
+
+
+export type SetHMachineTagsMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', machine?: { __typename?: 'HMachineMutation', setMachineTags: { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> } } | null } | null };
+
+export type HMachineResultFragment = { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> };
+
+export type HmachinesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HmachinesQuery = { __typename?: 'Query', headscale?: { __typename?: 'HeadscaleQuery', machines: Array<{ __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> }> } | null };
+
+export type HmachineQueryVariables = Exact<{
+  machineId: Scalars['Int'];
+}>;
+
+
+export type HmachineQuery = { __typename?: 'Query', headscale?: { __typename?: 'HeadscaleQuery', machine?: { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> } | null } | null };
+
+export type SaveMachineMutationVariables = Exact<{
   machineInput?: InputMaybe<MachineInput>;
-};
+}>;
 
 
-export type MachineMutationDeleteMachineArgs = {
-  id: Scalars['ID'];
-};
+export type SaveMachineMutation = { __typename?: 'Mutation', machine?: { __typename?: 'MachineMutation', saveMachine?: { __typename?: 'Machine', id?: string | null, name?: string | null } | null } | null };
 
-export type ProjectInput = {
-  id?: InputMaybe<Scalars['ID']>;
-  code?: InputMaybe<Scalars['String']>;
-  name?: InputMaybe<Scalars['String']>;
-  machineID?: InputMaybe<Scalars['ID']>;
-  machineIDs?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
-};
+export type DeleteMachineMutationVariables = Exact<{
+  machineID: Scalars['ID'];
+}>;
 
-export type RouteInput = {
-  id?: InputMaybe<Scalars['ID']>;
-  name?: InputMaybe<Scalars['String']>;
-  description?: InputMaybe<Scalars['String']>;
-  projectID?: InputMaybe<Scalars['ID']>;
-};
 
-export type MachineInput = {
-  id?: InputMaybe<Scalars['ID']>;
-  name?: InputMaybe<Scalars['String']>;
-};
+export type DeleteMachineMutation = { __typename?: 'Mutation', machine?: { __typename?: 'MachineMutation', deleteMachine: number } | null };
 
-export type HasId = {
-  id?: Maybe<Scalars['ID']>;
-};
+export type MachinesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MachinesQuery = { __typename?: 'Query', machines?: Array<{ __typename?: 'Machine', id?: string | null, name?: string | null } | null> | null };
 
 export type SaveProjectMutationVariables = Exact<{
   projectInput?: InputMaybe<ProjectInput>;
@@ -205,26 +376,388 @@ export type RoutesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type RoutesQuery = { __typename?: 'Query', routes?: Array<{ __typename?: 'Route', id?: string | null, name?: string | null, description?: string | null, projectID?: string | null, project?: { __typename?: 'Project', id?: string | null, name?: string | null } | null } | null> | null };
 
-export type SaveMachineMutationVariables = Exact<{
-  machineInput?: InputMaybe<MachineInput>;
-}>;
+export const HMachineResultFragmentDoc = gql`
+    fragment HMachineResult on HMachine {
+  id
+  name
+  ipAddresses
+  lastSeen {
+    seconds
+    nanos
+  }
+  forcedTags
+  givenName
+  online
+  user {
+    id
+    name
+  }
+  routes {
+    id
+    prefix
+    enabled
+  }
+}
+    `;
+export const EnableHRouteDocument = gql`
+    mutation enableHRoute($routeId: Int!, $enable: Boolean!) {
+  headscale {
+    route {
+      enableRoute(routeId: $routeId, enable: $enable)
+    }
+  }
+}
+    `;
+export type EnableHRouteMutationFn = Apollo.MutationFunction<EnableHRouteMutation, EnableHRouteMutationVariables>;
 
+/**
+ * __useEnableHRouteMutation__
+ *
+ * To run a mutation, you first call `useEnableHRouteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useEnableHRouteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [enableHRouteMutation, { data, loading, error }] = useEnableHRouteMutation({
+ *   variables: {
+ *      routeId: // value for 'routeId'
+ *      enable: // value for 'enable'
+ *   },
+ * });
+ */
+export function useEnableHRouteMutation(baseOptions?: Apollo.MutationHookOptions<EnableHRouteMutation, EnableHRouteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<EnableHRouteMutation, EnableHRouteMutationVariables>(EnableHRouteDocument, options);
+      }
+export type EnableHRouteMutationHookResult = ReturnType<typeof useEnableHRouteMutation>;
+export type EnableHRouteMutationResult = Apollo.MutationResult<EnableHRouteMutation>;
+export type EnableHRouteMutationOptions = Apollo.BaseMutationOptions<EnableHRouteMutation, EnableHRouteMutationVariables>;
+export const DeleteHRouteDocument = gql`
+    mutation deleteHRoute($routeId: Int!) {
+  headscale {
+    route {
+      deleteRoute(routeId: $routeId)
+    }
+  }
+}
+    `;
+export type DeleteHRouteMutationFn = Apollo.MutationFunction<DeleteHRouteMutation, DeleteHRouteMutationVariables>;
 
-export type SaveMachineMutation = { __typename?: 'Mutation', machine?: { __typename?: 'MachineMutation', saveMachine?: { __typename?: 'Machine', id?: string | null, name?: string | null } | null } | null };
+/**
+ * __useDeleteHRouteMutation__
+ *
+ * To run a mutation, you first call `useDeleteHRouteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteHRouteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteHRouteMutation, { data, loading, error }] = useDeleteHRouteMutation({
+ *   variables: {
+ *      routeId: // value for 'routeId'
+ *   },
+ * });
+ */
+export function useDeleteHRouteMutation(baseOptions?: Apollo.MutationHookOptions<DeleteHRouteMutation, DeleteHRouteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteHRouteMutation, DeleteHRouteMutationVariables>(DeleteHRouteDocument, options);
+      }
+export type DeleteHRouteMutationHookResult = ReturnType<typeof useDeleteHRouteMutation>;
+export type DeleteHRouteMutationResult = Apollo.MutationResult<DeleteHRouteMutation>;
+export type DeleteHRouteMutationOptions = Apollo.BaseMutationOptions<DeleteHRouteMutation, DeleteHRouteMutationVariables>;
+export const RenameHMachineDocument = gql`
+    mutation renameHMachine($machineId: Int!, $newName: String!) {
+  headscale {
+    machine {
+      renameMachine(machineId: $machineId, name: $newName) {
+        ...HMachineResult
+      }
+    }
+  }
+}
+    ${HMachineResultFragmentDoc}`;
+export type RenameHMachineMutationFn = Apollo.MutationFunction<RenameHMachineMutation, RenameHMachineMutationVariables>;
 
-export type DeleteMachineMutationVariables = Exact<{
-  machineID: Scalars['ID'];
-}>;
+/**
+ * __useRenameHMachineMutation__
+ *
+ * To run a mutation, you first call `useRenameHMachineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRenameHMachineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [renameHMachineMutation, { data, loading, error }] = useRenameHMachineMutation({
+ *   variables: {
+ *      machineId: // value for 'machineId'
+ *      newName: // value for 'newName'
+ *   },
+ * });
+ */
+export function useRenameHMachineMutation(baseOptions?: Apollo.MutationHookOptions<RenameHMachineMutation, RenameHMachineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RenameHMachineMutation, RenameHMachineMutationVariables>(RenameHMachineDocument, options);
+      }
+export type RenameHMachineMutationHookResult = ReturnType<typeof useRenameHMachineMutation>;
+export type RenameHMachineMutationResult = Apollo.MutationResult<RenameHMachineMutation>;
+export type RenameHMachineMutationOptions = Apollo.BaseMutationOptions<RenameHMachineMutation, RenameHMachineMutationVariables>;
+export const DeleteHMachineDocument = gql`
+    mutation deleteHMachine($machineID: Int!) {
+  headscale {
+    machine {
+      deleteMachine(machineId: $machineID)
+    }
+  }
+}
+    `;
+export type DeleteHMachineMutationFn = Apollo.MutationFunction<DeleteHMachineMutation, DeleteHMachineMutationVariables>;
 
+/**
+ * __useDeleteHMachineMutation__
+ *
+ * To run a mutation, you first call `useDeleteHMachineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteHMachineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteHMachineMutation, { data, loading, error }] = useDeleteHMachineMutation({
+ *   variables: {
+ *      machineID: // value for 'machineID'
+ *   },
+ * });
+ */
+export function useDeleteHMachineMutation(baseOptions?: Apollo.MutationHookOptions<DeleteHMachineMutation, DeleteHMachineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteHMachineMutation, DeleteHMachineMutationVariables>(DeleteHMachineDocument, options);
+      }
+export type DeleteHMachineMutationHookResult = ReturnType<typeof useDeleteHMachineMutation>;
+export type DeleteHMachineMutationResult = Apollo.MutationResult<DeleteHMachineMutation>;
+export type DeleteHMachineMutationOptions = Apollo.BaseMutationOptions<DeleteHMachineMutation, DeleteHMachineMutationVariables>;
+export const SetHMachineTagsDocument = gql`
+    mutation setHMachineTags($machineId: Int!, $tags: [String!]!) {
+  headscale {
+    machine {
+      setMachineTags(machineId: $machineId, tags: $tags) {
+        ...HMachineResult
+      }
+    }
+  }
+}
+    ${HMachineResultFragmentDoc}`;
+export type SetHMachineTagsMutationFn = Apollo.MutationFunction<SetHMachineTagsMutation, SetHMachineTagsMutationVariables>;
 
-export type DeleteMachineMutation = { __typename?: 'Mutation', machine?: { __typename?: 'MachineMutation', deleteMachine: number } | null };
+/**
+ * __useSetHMachineTagsMutation__
+ *
+ * To run a mutation, you first call `useSetHMachineTagsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetHMachineTagsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setHMachineTagsMutation, { data, loading, error }] = useSetHMachineTagsMutation({
+ *   variables: {
+ *      machineId: // value for 'machineId'
+ *      tags: // value for 'tags'
+ *   },
+ * });
+ */
+export function useSetHMachineTagsMutation(baseOptions?: Apollo.MutationHookOptions<SetHMachineTagsMutation, SetHMachineTagsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetHMachineTagsMutation, SetHMachineTagsMutationVariables>(SetHMachineTagsDocument, options);
+      }
+export type SetHMachineTagsMutationHookResult = ReturnType<typeof useSetHMachineTagsMutation>;
+export type SetHMachineTagsMutationResult = Apollo.MutationResult<SetHMachineTagsMutation>;
+export type SetHMachineTagsMutationOptions = Apollo.BaseMutationOptions<SetHMachineTagsMutation, SetHMachineTagsMutationVariables>;
+export const HmachinesDocument = gql`
+    query hmachines {
+  headscale {
+    machines {
+      ...HMachineResult
+    }
+  }
+}
+    ${HMachineResultFragmentDoc}`;
 
-export type MachinesQueryVariables = Exact<{ [key: string]: never; }>;
+/**
+ * __useHmachinesQuery__
+ *
+ * To run a query within a React component, call `useHmachinesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHmachinesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHmachinesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHmachinesQuery(baseOptions?: Apollo.QueryHookOptions<HmachinesQuery, HmachinesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HmachinesQuery, HmachinesQueryVariables>(HmachinesDocument, options);
+      }
+export function useHmachinesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HmachinesQuery, HmachinesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HmachinesQuery, HmachinesQueryVariables>(HmachinesDocument, options);
+        }
+export type HmachinesQueryHookResult = ReturnType<typeof useHmachinesQuery>;
+export type HmachinesLazyQueryHookResult = ReturnType<typeof useHmachinesLazyQuery>;
+export type HmachinesQueryResult = Apollo.QueryResult<HmachinesQuery, HmachinesQueryVariables>;
+export const HmachineDocument = gql`
+    query hmachine($machineId: Int!) {
+  headscale {
+    machine(machineId: $machineId) {
+      ...HMachineResult
+    }
+  }
+}
+    ${HMachineResultFragmentDoc}`;
 
+/**
+ * __useHmachineQuery__
+ *
+ * To run a query within a React component, call `useHmachineQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHmachineQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHmachineQuery({
+ *   variables: {
+ *      machineId: // value for 'machineId'
+ *   },
+ * });
+ */
+export function useHmachineQuery(baseOptions: Apollo.QueryHookOptions<HmachineQuery, HmachineQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HmachineQuery, HmachineQueryVariables>(HmachineDocument, options);
+      }
+export function useHmachineLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HmachineQuery, HmachineQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HmachineQuery, HmachineQueryVariables>(HmachineDocument, options);
+        }
+export type HmachineQueryHookResult = ReturnType<typeof useHmachineQuery>;
+export type HmachineLazyQueryHookResult = ReturnType<typeof useHmachineLazyQuery>;
+export type HmachineQueryResult = Apollo.QueryResult<HmachineQuery, HmachineQueryVariables>;
+export const SaveMachineDocument = gql`
+    mutation saveMachine($machineInput: MachineInput) {
+  machine {
+    saveMachine(machineInput: $machineInput) {
+      id
+      name
+    }
+  }
+}
+    `;
+export type SaveMachineMutationFn = Apollo.MutationFunction<SaveMachineMutation, SaveMachineMutationVariables>;
 
-export type MachinesQuery = { __typename?: 'Query', machines?: Array<{ __typename?: 'Machine', id?: string | null, name?: string | null } | null> | null };
+/**
+ * __useSaveMachineMutation__
+ *
+ * To run a mutation, you first call `useSaveMachineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveMachineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [saveMachineMutation, { data, loading, error }] = useSaveMachineMutation({
+ *   variables: {
+ *      machineInput: // value for 'machineInput'
+ *   },
+ * });
+ */
+export function useSaveMachineMutation(baseOptions?: Apollo.MutationHookOptions<SaveMachineMutation, SaveMachineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SaveMachineMutation, SaveMachineMutationVariables>(SaveMachineDocument, options);
+      }
+export type SaveMachineMutationHookResult = ReturnType<typeof useSaveMachineMutation>;
+export type SaveMachineMutationResult = Apollo.MutationResult<SaveMachineMutation>;
+export type SaveMachineMutationOptions = Apollo.BaseMutationOptions<SaveMachineMutation, SaveMachineMutationVariables>;
+export const DeleteMachineDocument = gql`
+    mutation deleteMachine($machineID: ID!) {
+  machine {
+    deleteMachine(id: $machineID)
+  }
+}
+    `;
+export type DeleteMachineMutationFn = Apollo.MutationFunction<DeleteMachineMutation, DeleteMachineMutationVariables>;
 
+/**
+ * __useDeleteMachineMutation__
+ *
+ * To run a mutation, you first call `useDeleteMachineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMachineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMachineMutation, { data, loading, error }] = useDeleteMachineMutation({
+ *   variables: {
+ *      machineID: // value for 'machineID'
+ *   },
+ * });
+ */
+export function useDeleteMachineMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMachineMutation, DeleteMachineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMachineMutation, DeleteMachineMutationVariables>(DeleteMachineDocument, options);
+      }
+export type DeleteMachineMutationHookResult = ReturnType<typeof useDeleteMachineMutation>;
+export type DeleteMachineMutationResult = Apollo.MutationResult<DeleteMachineMutation>;
+export type DeleteMachineMutationOptions = Apollo.BaseMutationOptions<DeleteMachineMutation, DeleteMachineMutationVariables>;
+export const MachinesDocument = gql`
+    query machines {
+  machines {
+    id
+    name
+  }
+}
+    `;
 
+/**
+ * __useMachinesQuery__
+ *
+ * To run a query within a React component, call `useMachinesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMachinesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMachinesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMachinesQuery(baseOptions?: Apollo.QueryHookOptions<MachinesQuery, MachinesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MachinesQuery, MachinesQueryVariables>(MachinesDocument, options);
+      }
+export function useMachinesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MachinesQuery, MachinesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MachinesQuery, MachinesQueryVariables>(MachinesDocument, options);
+        }
+export type MachinesQueryHookResult = ReturnType<typeof useMachinesQuery>;
+export type MachinesLazyQueryHookResult = ReturnType<typeof useMachinesLazyQuery>;
+export type MachinesQueryResult = Apollo.QueryResult<MachinesQuery, MachinesQueryVariables>;
 export const SaveProjectDocument = gql`
     mutation saveProject($projectInput: ProjectInput) {
   project {
@@ -503,107 +1036,3 @@ export function useRoutesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Rou
 export type RoutesQueryHookResult = ReturnType<typeof useRoutesQuery>;
 export type RoutesLazyQueryHookResult = ReturnType<typeof useRoutesLazyQuery>;
 export type RoutesQueryResult = Apollo.QueryResult<RoutesQuery, RoutesQueryVariables>;
-export const SaveMachineDocument = gql`
-    mutation saveMachine($machineInput: MachineInput) {
-  machine {
-    saveMachine(machineInput: $machineInput) {
-      id
-      name
-    }
-  }
-}
-    `;
-export type SaveMachineMutationFn = Apollo.MutationFunction<SaveMachineMutation, SaveMachineMutationVariables>;
-
-/**
- * __useSaveMachineMutation__
- *
- * To run a mutation, you first call `useSaveMachineMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSaveMachineMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [saveMachineMutation, { data, loading, error }] = useSaveMachineMutation({
- *   variables: {
- *      machineInput: // value for 'machineInput'
- *   },
- * });
- */
-export function useSaveMachineMutation(baseOptions?: Apollo.MutationHookOptions<SaveMachineMutation, SaveMachineMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<SaveMachineMutation, SaveMachineMutationVariables>(SaveMachineDocument, options);
-      }
-export type SaveMachineMutationHookResult = ReturnType<typeof useSaveMachineMutation>;
-export type SaveMachineMutationResult = Apollo.MutationResult<SaveMachineMutation>;
-export type SaveMachineMutationOptions = Apollo.BaseMutationOptions<SaveMachineMutation, SaveMachineMutationVariables>;
-export const DeleteMachineDocument = gql`
-    mutation deleteMachine($machineID: ID!) {
-  machine {
-    deleteMachine(id: $machineID)
-  }
-}
-    `;
-export type DeleteMachineMutationFn = Apollo.MutationFunction<DeleteMachineMutation, DeleteMachineMutationVariables>;
-
-/**
- * __useDeleteMachineMutation__
- *
- * To run a mutation, you first call `useDeleteMachineMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteMachineMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteMachineMutation, { data, loading, error }] = useDeleteMachineMutation({
- *   variables: {
- *      machineID: // value for 'machineID'
- *   },
- * });
- */
-export function useDeleteMachineMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMachineMutation, DeleteMachineMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteMachineMutation, DeleteMachineMutationVariables>(DeleteMachineDocument, options);
-      }
-export type DeleteMachineMutationHookResult = ReturnType<typeof useDeleteMachineMutation>;
-export type DeleteMachineMutationResult = Apollo.MutationResult<DeleteMachineMutation>;
-export type DeleteMachineMutationOptions = Apollo.BaseMutationOptions<DeleteMachineMutation, DeleteMachineMutationVariables>;
-export const MachinesDocument = gql`
-    query machines {
-  machines {
-    id
-    name
-  }
-}
-    `;
-
-/**
- * __useMachinesQuery__
- *
- * To run a query within a React component, call `useMachinesQuery` and pass it any options that fit your needs.
- * When your component renders, `useMachinesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useMachinesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useMachinesQuery(baseOptions?: Apollo.QueryHookOptions<MachinesQuery, MachinesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<MachinesQuery, MachinesQueryVariables>(MachinesDocument, options);
-      }
-export function useMachinesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MachinesQuery, MachinesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<MachinesQuery, MachinesQueryVariables>(MachinesDocument, options);
-        }
-export type MachinesQueryHookResult = ReturnType<typeof useMachinesQuery>;
-export type MachinesLazyQueryHookResult = ReturnType<typeof useMachinesLazyQuery>;
-export type MachinesQueryResult = Apollo.QueryResult<MachinesQuery, MachinesQueryVariables>;

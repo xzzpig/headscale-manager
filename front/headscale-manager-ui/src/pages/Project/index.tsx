@@ -31,14 +31,14 @@ const columns: ProColumns<Project>[] = [
     {
         title: "路由",
         dataIndex: "routes",
-        render: (dom, project) => project?.routes?.map(r => <div><Tag>{r?.name}</Tag></div>),
+        render: (dom, project) => project?.routes?.map(r => <div key={r?.id}><Tag>{r?.name}</Tag></div>),
         editable: false,
     },
     {
         title: "可用机器",
         dataIndex: "machineIDs",
         valueType: "select",
-        render: (dom, project, index, action, schema) => project?.machines?.map(m => <div><Tag>{m?.name}</Tag></div>),
+        render: (dom, project, index, action, schema) => project?.machines?.map(m => <div key={m?.id}><Tag>{m?.name}</Tag></div>),
         renderFormItem(schema, config, form, action) {
             return <ProFormSelect
                 mode="multiple"
@@ -118,7 +118,7 @@ const reactNode: React.FC = () => {
         try {
             return await refetch();
         } catch (e: any) {
-            message.error('刷新失败:' + (e?.message ?? e));
+            messageApi.error('刷新失败:' + (e?.message ?? e));
             setProjects([])
         } finally {
             setRefreshing(false);
@@ -134,17 +134,17 @@ const reactNode: React.FC = () => {
                 }
             })
             let results = result.data?.project?.syncProjectRoute ?? []
-            message.success('同步成功')
+            messageApi.success('同步成功')
             if (results.length == 0) {
-                message.info('没有需要同步的路由')
+                messageApi.info('没有需要同步的路由')
             }
             if (projectID == undefined) {
                 for (let r of results) {
-                    message.info(`[${r?.project?.name}]${r.routeEnable ? '启用' : '禁用'}路由:${r?.machine?.name}-${r?.route?.name}`, 5)
+                    messageApi.info(`[${r?.project?.name}]${r.routeEnable ? '启用' : '禁用'}路由:${r?.machine?.name}-${r?.route?.name}`, 5)
                 }
             }
         } catch (e: any) {
-            message.error('同步失败:' + (e?.message ?? e));
+            messageApi.error('同步失败:' + (e?.message ?? e));
         }
     }
 
@@ -171,7 +171,6 @@ const reactNode: React.FC = () => {
                     actions: [
                         <ButtonGroup>
                             <Button
-                                // icon={}
                                 onClick={async () => {
                                     await doRefresh()
                                 }} >
@@ -214,7 +213,7 @@ const reactNode: React.FC = () => {
                                 }
                             },
                             onError: (e) => {
-                                message.error('保存失败:' + (e.message))
+                                messageApi.error('保存失败:' + (e.message))
                             }
                         })
                         if (data.id != NEW_KEY) {
@@ -229,7 +228,7 @@ const reactNode: React.FC = () => {
                                 projectID: row.id!!
                             },
                             onError: (e) => {
-                                message.error('删除失败:' + (e.message))
+                                messageApi.error('删除失败:' + (e.message))
                             }
                         })
                         await doRefresh()

@@ -21,6 +21,15 @@ func (c *HeadscaleClient) ListMachineRoutes(machineId uint64) (*v1.GetMachineRou
 	})
 }
 
+func (c *HeadscaleClient) GetMachine(machineId uint64) (*v1.GetMachineResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("GetMachine", zap.Uint64("machineId", machineId))
+	return c.Client.GetMachine(ctx, &v1.GetMachineRequest{
+		MachineId: machineId,
+	})
+}
+
 func (c *HeadscaleClient) EnableRoute(routeId uint64, enable bool) error {
 	ctx, cancel := c.NewContext()
 	defer cancel()
@@ -36,4 +45,49 @@ func (c *HeadscaleClient) EnableRoute(routeId uint64, enable bool) error {
 		})
 		return err
 	}
+}
+
+func (c *HeadscaleClient) DeleteRoute(routeId uint64) error {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("DeleteRoute", zap.Uint64("routeId", routeId))
+	_, err := c.Client.DeleteRoute(ctx, &v1.DeleteRouteRequest{
+		RouteId: routeId,
+	})
+	return err
+}
+
+func (c *HeadscaleClient) RenameMachine(machineId uint64, name string) (*v1.RenameMachineResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("RenameMachine", zap.Uint64("machineId", machineId), zap.String("name", name))
+	res, err := c.Client.RenameMachine(ctx, &v1.RenameMachineRequest{
+		MachineId: machineId,
+		NewName:   name,
+	})
+	return res, err
+}
+
+func (c *HeadscaleClient) DeleteMachine(machineId uint64) error {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("DeleteMachine", zap.Uint64("machineId", machineId))
+	_, err := c.Client.DeleteMachine(ctx, &v1.DeleteMachineRequest{
+		MachineId: machineId,
+	})
+	return err
+}
+
+func (c *HeadscaleClient) SetMachineTags(machineId uint64, tags []string) (*v1.SetTagsResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("SetMachineTags", zap.Uint64("machineId", machineId), zap.Strings("tags", tags))
+	res, err := c.Client.SetTags(ctx, &v1.SetTagsRequest{
+		MachineId: machineId,
+		Tags:      tags,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

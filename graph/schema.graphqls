@@ -121,16 +121,99 @@ type SyncResult{
 	routeEnable: Boolean!
 }
 
+type Timestamp{
+	seconds: Int!
+	nanos: Int!
+}
+
+"""
+Headscale Machine
+"""
+type HMachine{
+	id: Int!
+	ipAddresses: [String!]! @goTag(
+	key: "json"
+	value: "ip_addresses,omitempty"
+)
+	name: String!
+	lastSeen: Timestamp @goTag(
+	key: "json"
+	value: "last_seen,omitempty"
+)
+	forcedTags: [String!]! @goTag(
+	key: "json"
+	value: "forced_tags,omitempty"
+)
+	givenName: String! @goTag(
+	key: "json"
+	value: "given_name,omitempty"
+)
+	online: Boolean!
+	user: HUser
+	routes: [HRoute!]! @goField(
+	forceResolver: true
+)
+}
+
+"""
+Headscale User
+"""
+type HUser{
+	id: String!
+	name: String!
+}
+
+type HRoute{
+	id: Int!
+	machine: HMachine @goField(
+	forceResolver: true
+)
+	prefix: String!
+	advertised: Boolean!
+	enabled: Boolean!
+	isPrimary: Boolean! @goTag(
+	key: "json"
+	value: "is_primary,omitempty"
+)
+	createdAt: Timestamp @goTag(
+	key: "json"
+	value: "created_at,omitempty"
+)
+	updatedAt: Timestamp @goTag(
+	key: "json"
+	value: "updated_at,omitempty"
+)
+	deletedAt: Timestamp @goTag(
+	key: "json"
+	value: "deleted_at,omitempty"
+)
+}
+
+type HeadscaleQuery{
+	machines: [HMachine!]! @goField(
+	forceResolver: true
+)
+	machine(
+		machineId: Int!
+	): HMachine @goField(
+	forceResolver: true
+)
+}
+
 type Query{
 	projects: [Project]
 	machines: [Machine]
 	routes: [Route]
+	headscale: HeadscaleQuery @goField(
+	forceResolver: true
+)
 }
 
 type Mutation{
 	project: ProjectMutation
 	route: RouteMutation
 	machine: MachineMutation
+	headscale: HeadscaleMutation
 }
 
 type ProjectMutation{
@@ -173,6 +256,45 @@ type MachineMutation{
 	deleteMachine(
 		id: ID!
 	): Int! @goField(
+	forceResolver: true
+)
+}
+
+type HeadscaleMutation{
+	route: HRouteMutation
+	machine: HMachineMutation
+}
+
+type HRouteMutation{
+	enableRoute(
+		routeId: Int!
+		enable: Boolean!
+	): Boolean! @goField(
+	forceResolver: true
+)
+	deleteRoute(
+		routeId: Int!
+	): Boolean! @goField(
+	forceResolver: true
+)
+}
+
+type HMachineMutation{
+	renameMachine(
+		machineId: Int!
+		name: String!
+	): HMachine! @goField(
+	forceResolver: true
+)
+	deleteMachine(
+		machineId: Int!
+	): Boolean! @goField(
+	forceResolver: true
+)
+	setMachineTags(
+		machineId: Int!
+		tags: [String!]!
+	): HMachine! @goField(
 	forceResolver: true
 )
 }

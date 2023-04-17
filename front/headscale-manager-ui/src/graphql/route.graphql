@@ -1,0 +1,33 @@
+mutation saveRoute($routeInput: RouteInput) {
+  route {
+    saveRoute(routeInput: $routeInput) {
+      id
+      name
+      description
+      projectID
+      project {
+        id
+        name
+      }
+    }
+  }
+}
+
+mutation deleteRoute($routeID: ID!) {
+  route {
+    deleteRoute(id: $routeID)
+  }
+}
+
+query routes {
+  routes {
+    id
+    name
+    description
+    projectID
+    project {
+      id
+      name
+    }
+  }
+}

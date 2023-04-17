@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestGetMachines(t *testing.T) {
+func TestListMachines(t *testing.T) {
 	headscale.SetupHeadscaleClient()
 	defer headscale.Client.Close()
 
@@ -27,6 +27,22 @@ func TestGetMachines(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	str, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(str))
+}
+
+func TestGetMachine(t *testing.T) {
+	headscale.SetupHeadscaleClient()
+	defer headscale.Client.Close()
+
+	result, err := headscale.Client.GetMachine(1)
+	if err != nil {
+		t.Error(err)
+	}
+
 	str, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		t.Error(err)
@@ -48,7 +64,6 @@ func TestGetMachineRoutes(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(string(str))
-
 }
 
 // func TestEnableRoute(t *testing.T) {
