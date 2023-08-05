@@ -1,12 +1,12 @@
-import { CheckCircleFilled, CheckCircleOutlined, CheckSquareOutlined, DeleteFilled, EditFilled, IssuesCloseOutlined, LoadingOutlined, MinusCircleFilled, MinusCircleOutlined, MinusSquareOutlined, MoreOutlined, PlusOutlined, QuestionCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, DeleteFilled, EditFilled, LoadingOutlined, MinusCircleOutlined, MoreOutlined, PlusOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import { ProDescriptions } from "@ant-design/pro-components";
-import { Col, Collapse, Dropdown, Input, InputRef, List, Row, Space, Spin, Tag, Tooltip } from "antd";
+import { Col, Collapse, Dropdown, Input, InputRef, List, Modal, Row, Space, Tag, Tooltip } from "antd";
+import { EventEmitter } from "events";
+import { debounce } from "lodash";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { HmachinesQueryResult, useEnableHRouteMutation, useHmachineLazyQuery, useMachinesLazyQuery, useRenameHMachineMutation, useSetHMachineTagsMutation } from "../../graphql/codegen";
+import { HmachinesQueryResult, useDeleteHMachineMutation, useDeleteHRouteMutation, useEnableHRouteMutation, useRenameHMachineMutation, useSetHMachineTagsMutation } from "../../graphql/codegen";
 import DeviceLastSeenIcon from "../DeviceLastSeenIcon";
-import _, { debounce } from "lodash"
-import { EventEmitter } from "events"
 const { Panel } = Collapse;
 
 type MachineType = NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<HmachinesQueryResult>["data"]>["headscale"]>["machines"]>[0]>
@@ -20,6 +20,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
     const lastSeen = new Date(parseInt((machine?.lastSeen?.seconds + "" + machine?.lastSeen?.nanos).substring(0, 13)))
     const [renameMachine] = useRenameHMachineMutation()
     const [changeTags, { loading }] = useSetHMachineTagsMutation()
+    const [deleteMachine] = useDeleteHMachineMutation()
     const doChangeTags = async (tags: string[]) => {
         await changeTags({
             variables: {
@@ -57,96 +58,115 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
 
     const [nameInput, setNameInput] = useState(false)
 
-    return <Collapse key={machine.id} expandIconPosition="end" >
-        <Panel
-            key={machine.id}
-            header={
-                <Row>
-                    <Col span={6}><DeviceName machine={machine} inputVisible={nameInput} onInputConfirm={async (newName) => {
-                        await renameMachine({
-                            variables: {
-                                machineId: machine.id,
-                                newName: newName
-                            }
-                        })
-                        return new Promise<void>((resolve, reject) => {
-                            eventEmitter.emit("DO_REFRESH_MACHINES")
-                            eventEmitter.once("NEW_MACHINES", () => {
-                                setNameInput(false)
-                                resolve()
+    const [modal, contextHolder] = Modal.useModal();
+
+    return (
+        <Collapse key={machine.id} expandIconPosition="end" >
+            {contextHolder}
+            <Panel
+                key={machine.id}
+                header={
+                    <Row>
+                        <Col span={6}><DeviceName machine={machine} inputVisible={nameInput} onInputConfirm={async (newName) => {
+                            await renameMachine({
+                                variables: {
+                                    machineId: machine.id,
+                                    newName: newName
+                                }
                             })
-                        })
-                    }} /></Col>
-                    <Col span={18}><Space wrap size={0}>{[<NewDeviceTag key="NEW" onInputConfirm={async (value) => {
-                        await new Promise<void>((resolve, reject) => {
-                            addTag(value)
-                            eventEmitter.once("NEW_MACHINES", () => resolve())
-                        })
-                    }}>NEW</NewDeviceTag>, ...machine.forcedTags.map(tag => <DeviceTag key={tag} title={tag.replace("tag:", "")} onClose={() => {
-                        return new Promise<void>((resolve, reject) => {
-                            removeTag(tag)
-                            eventEmitter.once("NEW_MACHINES", () => resolve())
-                        })
-                    }} />)]}</Space></Col>
-                </Row>}
-            extra={
-                <Space onClick={e => e.stopPropagation()}>
-                    <Dropdown
-                        menu={{
-                            items: [
-                                {
-                                    label: '修改名称',
-                                    key: 'edit',
-                                    icon: <EditFilled />,
-                                    onClick: () => setNameInput(true)
-                                },
-                                {
-                                    label: '删除',
-                                    key: 'delete',
-                                    icon: <DeleteFilled />,
-                                    danger: true,
-                                },
-                            ]
-                        }} >
-                        <MoreOutlined />
-                    </Dropdown>
-                </Space>
-            }
-        >
-            <ProDescriptions style={{ margin: "-16px" }} bordered size="small" dataSource={machine} column={1} columns={[
-                {
-                    label: "名称",
-                    dataIndex: "name"
-                },
-                {
-                    label: "IP地址",
-                    dataIndex: "ip_addresses",
-                    render(dom, entity, index, action, schema) {
-                        return <Space wrap size={0}>{entity.ipAddresses.map((ip, index) => <Tag key={index} bordered={false}>{ip}</Tag>)}</Space>
+                            return new Promise<void>((resolve, reject) => {
+                                eventEmitter.emit("DO_REFRESH_MACHINES")
+                                eventEmitter.once("NEW_MACHINES", () => {
+                                    setNameInput(false)
+                                    resolve()
+                                })
+                            })
+                        }} /></Col>
+                        <Col span={18}><Space wrap size={0}>{[<NewDeviceTag key="NEW" onInputConfirm={async (value) => {
+                            await new Promise<void>((resolve, reject) => {
+                                addTag(value)
+                                eventEmitter.once("NEW_MACHINES", () => resolve())
+                            })
+                        }}>NEW</NewDeviceTag>, ...machine.forcedTags.map(tag => <DeviceTag key={tag} title={tag.replace("tag:", "")} onClose={() => {
+                            return new Promise<void>((resolve, reject) => {
+                                removeTag(tag)
+                                eventEmitter.once("NEW_MACHINES", () => resolve())
+                            })
+                        }} />)]}</Space></Col>
+                    </Row>}
+                extra={
+                    <Space onClick={e => e.stopPropagation()}>
+                        <Dropdown
+                            menu={{
+                                items: [
+                                    {
+                                        label: '修改名称',
+                                        key: 'edit',
+                                        icon: <EditFilled />,
+                                        onClick: () => setNameInput(true)
+                                    },
+                                    {
+                                        label: '删除',
+                                        key: 'delete',
+                                        icon: <DeleteFilled />,
+                                        danger: true,
+                                        onClick: async () => {
+                                            modal.confirm({
+                                                title: "是否删除设备",
+                                                onOk: async () => {
+                                                    await deleteMachine({
+                                                        variables: {
+                                                            machineID: machine.id
+                                                        }
+                                                    })
+                                                    eventEmitter.emit("DO_REFRESH_MACHINES")
+                                                },
+                                            })
+                                        }
+                                    },
+                                ]
+                            }}
+                        >
+                            <MoreOutlined />
+                        </Dropdown>
+                    </Space>
+                }
+            >
+                <ProDescriptions style={{ margin: "-16px" }} bordered size="small" dataSource={machine} column={1} columns={[
+                    {
+                        label: "名称",
+                        dataIndex: "name"
                     },
-                },
-                {
-                    label: "最后在线",
-                    dataIndex: "last_seen",
-                    render(dom, entity, index, action, schema) {
-                        return moment(lastSeen).locale("zh_CN").format()
+                    {
+                        label: "IP地址",
+                        dataIndex: "ip_addresses",
+                        render(dom, entity, index, action, schema) {
+                            return <Space wrap size={0}>{entity.ipAddresses.map((ip, index) => <Tag key={index} bordered={false}>{ip}</Tag>)}</Space>
+                        },
                     },
-                },
-                {
-                    label: "所属用户",
-                    dataIndex: ["user", "name"],
-                },
-                {
-                    label: "路由",
-                    dataIndex: "routes",
-                    render(dom, entity, index, action, schema) {
-                        return <List>{entity.routes.map((route) => <RouteButton key={route.prefix} route={route} eventEmitter={eventEmitter} />)}</List>
-                    }
-                },
-            ]}>
-            </ProDescriptions>
-        </Panel>
-    </Collapse>
+                    {
+                        label: "最后在线",
+                        dataIndex: "last_seen",
+                        render(dom, entity, index, action, schema) {
+                            return moment(lastSeen).locale("zh_CN").format()
+                        },
+                    },
+                    {
+                        label: "所属用户",
+                        dataIndex: ["user", "name"],
+                    },
+                    {
+                        label: "路由",
+                        dataIndex: "routes",
+                        render(dom, entity, index, action, schema) {
+                            return <List>{entity.routes.map((route) => <RouteButton key={route.prefix} route={route} eventEmitter={eventEmitter} />)}</List>
+                        }
+                    },
+                ]}>
+                </ProDescriptions>
+            </Panel>
+        </Collapse>
+    )
 }
 
 const RouteButton: React.FC<{
@@ -155,6 +175,8 @@ const RouteButton: React.FC<{
 }> = ({ route, eventEmitter }) => {
     const [enableRoute, { loading }] = useEnableHRouteMutation()
     const [refreshing, setRefreshing] = useState(false)
+    const [modal, contextHolder] = Modal.useModal();
+    const [deleteRoute] = useDeleteHRouteMutation()
 
     const action = route.enabled ? "禁用" : "启用"
 
@@ -167,6 +189,19 @@ const RouteButton: React.FC<{
                     key: 'delete',
                     icon: <DeleteFilled />,
                     danger: true,
+                    onClick: () => {
+                        modal.confirm({
+                            title: "是否删除路由",
+                            onOk: async () => {
+                                await deleteRoute({
+                                    variables: {
+                                        routeId: route.id
+                                    }
+                                })
+                                eventEmitter.emit("DO_REFRESH_MACHINES")
+                            },
+                        })
+                    }
                 },
             ]
         }}
@@ -189,11 +224,13 @@ const RouteButton: React.FC<{
         }}
     ><Tooltip title={loading ? action + "路由中" :
         refreshing ? "刷新信息中" :
-            action + "路由"}>{
-                loading ? <LoadingOutlined spin /> :
-                    refreshing ? <QuestionCircleOutlined /> :
-                        route.enabled ? <CheckCircleOutlined /> : <MinusCircleOutlined />}</Tooltip>
+            action + "路由"}>
+            {loading ? <LoadingOutlined spin /> :
+                refreshing ? <QuestionCircleOutlined /> :
+                    route.enabled ? <CheckCircleOutlined /> : <MinusCircleOutlined />}
+        </Tooltip>
         {route.prefix}
+        {contextHolder}
     </Dropdown.Button>
 }
 
