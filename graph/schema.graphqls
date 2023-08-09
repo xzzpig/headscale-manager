@@ -161,6 +161,10 @@ Headscale User
 type HUser{
 	id: String!
 	name: String!
+	createdAt: Timestamp @goTag(
+	key: "json"
+	value: "created_at,omitempty"
+)
 }
 
 type HRoute{
@@ -196,6 +200,9 @@ type HeadscaleQuery{
 	machine(
 		machineId: Int!
 	): HMachine @goField(
+	forceResolver: true
+)
+	users: [HUser!]! @goField(
 	forceResolver: true
 )
 }
@@ -263,6 +270,7 @@ type MachineMutation{
 type HeadscaleMutation{
 	route: HRouteMutation
 	machine: HMachineMutation
+	user: HUserMutation
 }
 
 type HRouteMutation{
@@ -295,6 +303,25 @@ type HMachineMutation{
 		machineId: Int!
 		tags: [String!]!
 	): HMachine! @goField(
+	forceResolver: true
+)
+}
+
+type HUserMutation{
+	createUser(
+		name: String!
+	): HUser! @goField(
+	forceResolver: true
+)
+	deleteUser(
+		name: String!
+	): Boolean! @goField(
+	forceResolver: true
+)
+	renameUser(
+		oldName: String!
+		newName: String!
+	): HUser! @goField(
 	forceResolver: true
 )
 }

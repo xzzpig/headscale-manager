@@ -73,6 +73,64 @@ func TestGetMachineRoutes(t *testing.T) {
 // 	}
 // }
 
+func TestListUsers(t *testing.T) {
+	headscale.SetupHeadscaleClient()
+	defer headscale.Client.Close()
+
+	result, err := headscale.Client.ListUsers()
+	if err != nil {
+		t.Error(err)
+	}
+
+	str, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(str))
+}
+
+func TestCreateUser(t *testing.T) {
+	headscale.SetupHeadscaleClient()
+	defer headscale.Client.Close()
+
+	result, err := headscale.Client.CreateUser("test")
+	if err != nil {
+		t.Error(err)
+	}
+
+	str, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(str))
+}
+
+func TestDeleteUser(t *testing.T) {
+	headscale.SetupHeadscaleClient()
+	defer headscale.Client.Close()
+
+	err := headscale.Client.DeleteUser("test")
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRenameUser(t *testing.T) {
+	headscale.SetupHeadscaleClient()
+	defer headscale.Client.Close()
+
+	result, err := headscale.Client.RenameUser("test", "test2")
+	if err != nil {
+		t.Error(err)
+	}
+
+	str, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(str))
+}
+
 func TestNewHeadscaleServiceClient(t *testing.T) {
 	client, conn, cancel, err := headscale.NewHeadscaleServiceClient()
 	defer conn.Close()

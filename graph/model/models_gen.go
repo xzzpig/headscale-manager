@@ -45,18 +45,27 @@ type HRouteMutation struct {
 
 // Headscale User
 type HUser struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string     `json:"id"`
+	Name      string     `json:"name"`
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+}
+
+type HUserMutation struct {
+	CreateUser *HUser `json:"createUser"`
+	DeleteUser bool   `json:"deleteUser"`
+	RenameUser *HUser `json:"renameUser"`
 }
 
 type HeadscaleMutation struct {
 	Route   *HRouteMutation   `json:"route,omitempty"`
 	Machine *HMachineMutation `json:"machine,omitempty"`
+	User    *HUserMutation    `json:"user,omitempty"`
 }
 
 type HeadscaleQuery struct {
 	Machines []*HMachine `json:"machines"`
 	Machine  *HMachine   `json:"machine,omitempty"`
+	Users    []*HUser    `json:"users"`
 }
 
 // 机器

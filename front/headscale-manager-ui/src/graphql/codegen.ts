@@ -86,8 +86,32 @@ export type HRouteMutationEnableRouteArgs = {
 /** Headscale User */
 export type HUser = {
   __typename?: 'HUser';
+  createdAt?: Maybe<Timestamp>;
   id: Scalars['String'];
   name: Scalars['String'];
+};
+
+export type HUserMutation = {
+  __typename?: 'HUserMutation';
+  createUser: HUser;
+  deleteUser: Scalars['Boolean'];
+  renameUser: HUser;
+};
+
+
+export type HUserMutationCreateUserArgs = {
+  name: Scalars['String'];
+};
+
+
+export type HUserMutationDeleteUserArgs = {
+  name: Scalars['String'];
+};
+
+
+export type HUserMutationRenameUserArgs = {
+  newName: Scalars['String'];
+  oldName: Scalars['String'];
 };
 
 export type HasId = {
@@ -98,12 +122,14 @@ export type HeadscaleMutation = {
   __typename?: 'HeadscaleMutation';
   machine?: Maybe<HMachineMutation>;
   route?: Maybe<HRouteMutation>;
+  user?: Maybe<HUserMutation>;
 };
 
 export type HeadscaleQuery = {
   __typename?: 'HeadscaleQuery';
   machine?: Maybe<HMachine>;
   machines: Array<HMachine>;
+  users: Array<HUser>;
 };
 
 
@@ -298,6 +324,28 @@ export type SetHMachineTagsMutationVariables = Exact<{
 
 export type SetHMachineTagsMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', machine?: { __typename?: 'HMachineMutation', setMachineTags: { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> } } | null } | null };
 
+export type CreateUserMutationVariables = Exact<{
+  userName: Scalars['String'];
+}>;
+
+
+export type CreateUserMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', user?: { __typename?: 'HUserMutation', createUser: { __typename?: 'HUser', id: string } } | null } | null };
+
+export type DeleteUserMutationVariables = Exact<{
+  userName: Scalars['String'];
+}>;
+
+
+export type DeleteUserMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', user?: { __typename?: 'HUserMutation', deleteUser: boolean } | null } | null };
+
+export type RenameUserMutationVariables = Exact<{
+  userName: Scalars['String'];
+  newName: Scalars['String'];
+}>;
+
+
+export type RenameUserMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', user?: { __typename?: 'HUserMutation', renameUser: { __typename?: 'HUser', id: string } } | null } | null };
+
 export type HMachineResultFragment = { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> };
 
 export type HmachinesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -311,6 +359,11 @@ export type HmachineQueryVariables = Exact<{
 
 
 export type HmachineQuery = { __typename?: 'Query', headscale?: { __typename?: 'HeadscaleQuery', machine?: { __typename?: 'HMachine', id: number, name: string, ipAddresses: Array<string>, forcedTags: Array<string>, givenName: string, online: boolean, lastSeen?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null, user?: { __typename?: 'HUser', id: string, name: string } | null, routes: Array<{ __typename?: 'HRoute', id: number, prefix: string, enabled: boolean }> } | null } | null };
+
+export type HusersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HusersQuery = { __typename?: 'Query', headscale?: { __typename?: 'HeadscaleQuery', users: Array<{ __typename?: 'HUser', id: string, name: string, oldName: string, createdAt?: { __typename?: 'Timestamp', seconds: number, nanos: number } | null }> } | null };
 
 export type SaveMachineMutationVariables = Exact<{
   machineInput?: InputMaybe<MachineInput>;
@@ -581,6 +634,116 @@ export function useSetHMachineTagsMutation(baseOptions?: Apollo.MutationHookOpti
 export type SetHMachineTagsMutationHookResult = ReturnType<typeof useSetHMachineTagsMutation>;
 export type SetHMachineTagsMutationResult = Apollo.MutationResult<SetHMachineTagsMutation>;
 export type SetHMachineTagsMutationOptions = Apollo.BaseMutationOptions<SetHMachineTagsMutation, SetHMachineTagsMutationVariables>;
+export const CreateUserDocument = gql`
+    mutation createUser($userName: String!) {
+  headscale {
+    user {
+      createUser(name: $userName) {
+        id
+      }
+    }
+  }
+}
+    `;
+export type CreateUserMutationFn = Apollo.MutationFunction<CreateUserMutation, CreateUserMutationVariables>;
+
+/**
+ * __useCreateUserMutation__
+ *
+ * To run a mutation, you first call `useCreateUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createUserMutation, { data, loading, error }] = useCreateUserMutation({
+ *   variables: {
+ *      userName: // value for 'userName'
+ *   },
+ * });
+ */
+export function useCreateUserMutation(baseOptions?: Apollo.MutationHookOptions<CreateUserMutation, CreateUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateUserMutation, CreateUserMutationVariables>(CreateUserDocument, options);
+      }
+export type CreateUserMutationHookResult = ReturnType<typeof useCreateUserMutation>;
+export type CreateUserMutationResult = Apollo.MutationResult<CreateUserMutation>;
+export type CreateUserMutationOptions = Apollo.BaseMutationOptions<CreateUserMutation, CreateUserMutationVariables>;
+export const DeleteUserDocument = gql`
+    mutation deleteUser($userName: String!) {
+  headscale {
+    user {
+      deleteUser(name: $userName)
+    }
+  }
+}
+    `;
+export type DeleteUserMutationFn = Apollo.MutationFunction<DeleteUserMutation, DeleteUserMutationVariables>;
+
+/**
+ * __useDeleteUserMutation__
+ *
+ * To run a mutation, you first call `useDeleteUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteUserMutation, { data, loading, error }] = useDeleteUserMutation({
+ *   variables: {
+ *      userName: // value for 'userName'
+ *   },
+ * });
+ */
+export function useDeleteUserMutation(baseOptions?: Apollo.MutationHookOptions<DeleteUserMutation, DeleteUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteUserMutation, DeleteUserMutationVariables>(DeleteUserDocument, options);
+      }
+export type DeleteUserMutationHookResult = ReturnType<typeof useDeleteUserMutation>;
+export type DeleteUserMutationResult = Apollo.MutationResult<DeleteUserMutation>;
+export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<DeleteUserMutation, DeleteUserMutationVariables>;
+export const RenameUserDocument = gql`
+    mutation renameUser($userName: String!, $newName: String!) {
+  headscale {
+    user {
+      renameUser(oldName: $userName, newName: $newName) {
+        id
+      }
+    }
+  }
+}
+    `;
+export type RenameUserMutationFn = Apollo.MutationFunction<RenameUserMutation, RenameUserMutationVariables>;
+
+/**
+ * __useRenameUserMutation__
+ *
+ * To run a mutation, you first call `useRenameUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRenameUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [renameUserMutation, { data, loading, error }] = useRenameUserMutation({
+ *   variables: {
+ *      userName: // value for 'userName'
+ *      newName: // value for 'newName'
+ *   },
+ * });
+ */
+export function useRenameUserMutation(baseOptions?: Apollo.MutationHookOptions<RenameUserMutation, RenameUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RenameUserMutation, RenameUserMutationVariables>(RenameUserDocument, options);
+      }
+export type RenameUserMutationHookResult = ReturnType<typeof useRenameUserMutation>;
+export type RenameUserMutationResult = Apollo.MutationResult<RenameUserMutation>;
+export type RenameUserMutationOptions = Apollo.BaseMutationOptions<RenameUserMutation, RenameUserMutationVariables>;
 export const HmachinesDocument = gql`
     query hmachines {
   headscale {
@@ -654,6 +817,48 @@ export function useHmachineLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<H
 export type HmachineQueryHookResult = ReturnType<typeof useHmachineQuery>;
 export type HmachineLazyQueryHookResult = ReturnType<typeof useHmachineLazyQuery>;
 export type HmachineQueryResult = Apollo.QueryResult<HmachineQuery, HmachineQueryVariables>;
+export const HusersDocument = gql`
+    query husers {
+  headscale {
+    users {
+      id
+      name
+      oldName: name
+      createdAt {
+        seconds
+        nanos
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useHusersQuery__
+ *
+ * To run a query within a React component, call `useHusersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHusersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHusersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHusersQuery(baseOptions?: Apollo.QueryHookOptions<HusersQuery, HusersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HusersQuery, HusersQueryVariables>(HusersDocument, options);
+      }
+export function useHusersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HusersQuery, HusersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HusersQuery, HusersQueryVariables>(HusersDocument, options);
+        }
+export type HusersQueryHookResult = ReturnType<typeof useHusersQuery>;
+export type HusersLazyQueryHookResult = ReturnType<typeof useHusersLazyQuery>;
+export type HusersQueryResult = Apollo.QueryResult<HusersQuery, HusersQueryVariables>;
 export const SaveMachineDocument = gql`
     mutation saveMachine($machineInput: MachineInput) {
   machine {

@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	HMachineMutation() HMachineMutationResolver
 	HRoute() HRouteResolver
 	HRouteMutation() HRouteMutationResolver
+	HUserMutation() HUserMutationResolver
 	HeadscaleQuery() HeadscaleQueryResolver
 	MachineMutation() MachineMutationResolver
 	Mutation() MutationResolver
@@ -92,18 +93,27 @@ type ComplexityRoot struct {
 	}
 
 	HUser struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+	}
+
+	HUserMutation struct {
+		CreateUser func(childComplexity int, name string) int
+		DeleteUser func(childComplexity int, name string) int
+		RenameUser func(childComplexity int, oldName string, newName string) int
 	}
 
 	HeadscaleMutation struct {
 		Machine func(childComplexity int) int
 		Route   func(childComplexity int) int
+		User    func(childComplexity int) int
 	}
 
 	HeadscaleQuery struct {
 		Machine  func(childComplexity int, machineID int) int
 		Machines func(childComplexity int) int
+		Users    func(childComplexity int) int
 	}
 
 	Machine struct {
@@ -191,9 +201,15 @@ type HRouteMutationResolver interface {
 	EnableRoute(ctx context.Context, obj *model.HRouteMutation, routeID int, enable bool) (bool, error)
 	DeleteRoute(ctx context.Context, obj *model.HRouteMutation, routeID int) (bool, error)
 }
+type HUserMutationResolver interface {
+	CreateUser(ctx context.Context, obj *model.HUserMutation, name string) (*model.HUser, error)
+	DeleteUser(ctx context.Context, obj *model.HUserMutation, name string) (bool, error)
+	RenameUser(ctx context.Context, obj *model.HUserMutation, oldName string, newName string) (*model.HUser, error)
+}
 type HeadscaleQueryResolver interface {
 	Machines(ctx context.Context, obj *model.HeadscaleQuery) ([]*model.HMachine, error)
 	Machine(ctx context.Context, obj *model.HeadscaleQuery, machineID int) (*model.HMachine, error)
+	Users(ctx context.Context, obj *model.HeadscaleQuery) ([]*model.HUser, error)
 }
 type MachineMutationResolver interface {
 	SaveMachine(ctx context.Context, obj *model.MachineMutation, machineInput *model.MachineInput) (*model.Machine, error)
@@ -438,6 +454,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.HRouteMutation.EnableRoute(childComplexity, args["routeId"].(int), args["enable"].(bool)), true
 
+	case "HUser.createdAt":
+		if e.complexity.HUser.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.HUser.CreatedAt(childComplexity), true
+
 	case "HUser.id":
 		if e.complexity.HUser.ID == nil {
 			break
@@ -452,6 +475,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.HUser.Name(childComplexity), true
 
+	case "HUserMutation.createUser":
+		if e.complexity.HUserMutation.CreateUser == nil {
+			break
+		}
+
+		args, err := ec.field_HUserMutation_createUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HUserMutation.CreateUser(childComplexity, args["name"].(string)), true
+
+	case "HUserMutation.deleteUser":
+		if e.complexity.HUserMutation.DeleteUser == nil {
+			break
+		}
+
+		args, err := ec.field_HUserMutation_deleteUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HUserMutation.DeleteUser(childComplexity, args["name"].(string)), true
+
+	case "HUserMutation.renameUser":
+		if e.complexity.HUserMutation.RenameUser == nil {
+			break
+		}
+
+		args, err := ec.field_HUserMutation_renameUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HUserMutation.RenameUser(childComplexity, args["oldName"].(string), args["newName"].(string)), true
+
 	case "HeadscaleMutation.machine":
 		if e.complexity.HeadscaleMutation.Machine == nil {
 			break
@@ -465,6 +524,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HeadscaleMutation.Route(childComplexity), true
+
+	case "HeadscaleMutation.user":
+		if e.complexity.HeadscaleMutation.User == nil {
+			break
+		}
+
+		return e.complexity.HeadscaleMutation.User(childComplexity), true
 
 	case "HeadscaleQuery.machine":
 		if e.complexity.HeadscaleQuery.Machine == nil {
@@ -484,6 +550,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HeadscaleQuery.Machines(childComplexity), true
+
+	case "HeadscaleQuery.users":
+		if e.complexity.HeadscaleQuery.Users == nil {
+			break
+		}
+
+		return e.complexity.HeadscaleQuery.Users(childComplexity), true
 
 	case "Machine.id":
 		if e.complexity.Machine.ID == nil {
@@ -982,6 +1055,60 @@ func (ec *executionContext) field_HRouteMutation_enableRoute_args(ctx context.Co
 		}
 	}
 	args["enable"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_HUserMutation_createUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_HUserMutation_deleteUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_HUserMutation_renameUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["oldName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("oldName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["oldName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["newName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["newName"] = arg1
 	return args, nil
 }
 
@@ -1509,6 +1636,8 @@ func (ec *executionContext) fieldContext_HMachine_user(ctx context.Context, fiel
 				return ec.fieldContext_HUser_id(ctx, field)
 			case "name":
 				return ec.fieldContext_HUser_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_HUser_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HUser", field.Name)
 		},
@@ -2405,6 +2534,234 @@ func (ec *executionContext) fieldContext_HUser_name(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _HUser_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.HUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HUser_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Timestamp)
+	fc.Result = res
+	return ec.marshalOTimestamp2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HUser_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "seconds":
+				return ec.fieldContext_Timestamp_seconds(ctx, field)
+			case "nanos":
+				return ec.fieldContext_Timestamp_nanos(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Timestamp", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HUserMutation_createUser(ctx context.Context, field graphql.CollectedField, obj *model.HUserMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HUserMutation_createUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HUserMutation().CreateUser(rctx, obj, fc.Args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.HUser)
+	fc.Result = res
+	return ec.marshalNHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HUserMutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HUserMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HUser_id(ctx, field)
+			case "name":
+				return ec.fieldContext_HUser_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_HUser_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HUser", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HUserMutation_createUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HUserMutation_deleteUser(ctx context.Context, field graphql.CollectedField, obj *model.HUserMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HUserMutation_deleteUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HUserMutation().DeleteUser(rctx, obj, fc.Args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HUserMutation_deleteUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HUserMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HUserMutation_deleteUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HUserMutation_renameUser(ctx context.Context, field graphql.CollectedField, obj *model.HUserMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HUserMutation_renameUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HUserMutation().RenameUser(rctx, obj, fc.Args["oldName"].(string), fc.Args["newName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.HUser)
+	fc.Result = res
+	return ec.marshalNHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HUserMutation_renameUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HUserMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HUser_id(ctx, field)
+			case "name":
+				return ec.fieldContext_HUser_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_HUser_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HUser", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HUserMutation_renameUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _HeadscaleMutation_route(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleMutation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HeadscaleMutation_route(ctx, field)
 	if err != nil {
@@ -2496,6 +2853,55 @@ func (ec *executionContext) fieldContext_HeadscaleMutation_machine(ctx context.C
 				return ec.fieldContext_HMachineMutation_setMachineTags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HMachineMutation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HeadscaleMutation_user(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HeadscaleMutation_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HUserMutation)
+	fc.Result = res
+	return ec.marshalOHUserMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUserMutation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HeadscaleMutation_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HeadscaleMutation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "createUser":
+				return ec.fieldContext_HUserMutation_createUser(ctx, field)
+			case "deleteUser":
+				return ec.fieldContext_HUserMutation_deleteUser(ctx, field)
+			case "renameUser":
+				return ec.fieldContext_HUserMutation_renameUser(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HUserMutation", field.Name)
 		},
 	}
 	return fc, nil
@@ -2633,6 +3039,58 @@ func (ec *executionContext) fieldContext_HeadscaleQuery_machine(ctx context.Cont
 	if fc.Args, err = ec.field_HeadscaleQuery_machine_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HeadscaleQuery_users(ctx context.Context, field graphql.CollectedField, obj *model.HeadscaleQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HeadscaleQuery_users(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HeadscaleQuery().Users(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.HUser)
+	fc.Result = res
+	return ec.marshalNHUser2ᚕᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HeadscaleQuery_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HeadscaleQuery",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_HUser_id(ctx, field)
+			case "name":
+				return ec.fieldContext_HUser_name(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_HUser_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HUser", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -3015,6 +3473,8 @@ func (ec *executionContext) fieldContext_Mutation_headscale(ctx context.Context,
 				return ec.fieldContext_HeadscaleMutation_route(ctx, field)
 			case "machine":
 				return ec.fieldContext_HeadscaleMutation_machine(ctx, field)
+			case "user":
+				return ec.fieldContext_HeadscaleMutation_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HeadscaleMutation", field.Name)
 		},
@@ -3766,6 +4226,8 @@ func (ec *executionContext) fieldContext_Query_headscale(ctx context.Context, fi
 				return ec.fieldContext_HeadscaleQuery_machines(ctx, field)
 			case "machine":
 				return ec.fieldContext_HeadscaleQuery_machine(ctx, field)
+			case "users":
+				return ec.fieldContext_HeadscaleQuery_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HeadscaleQuery", field.Name)
 		},
@@ -6458,18 +6920,20 @@ func (ec *executionContext) unmarshalInputMachineInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ID = data
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		}
 	}
 
@@ -6494,42 +6958,47 @@ func (ec *executionContext) unmarshalInputProjectInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ID = data
 		case "code":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
-			it.Code, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Code = data
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "machineID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineID"))
-			it.MachineID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MachineID = data
 		case "machineIDs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineIDs"))
-			it.MachineIDs, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MachineIDs = data
 		}
 	}
 
@@ -6554,34 +7023,38 @@ func (ec *executionContext) unmarshalInputRouteInput(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ID = data
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "description":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Description = data
 		case "projectID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectID"))
-			it.ProjectID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ProjectID = data
 		}
 	}
 
@@ -6968,6 +7441,91 @@ func (ec *executionContext) _HUser(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createdAt":
+
+			out.Values[i] = ec._HUser_createdAt(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var hUserMutationImplementors = []string{"HUserMutation"}
+
+func (ec *executionContext) _HUserMutation(ctx context.Context, sel ast.SelectionSet, obj *model.HUserMutation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hUserMutationImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HUserMutation")
+		case "createUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HUserMutation_createUser(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "deleteUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HUserMutation_deleteUser(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "renameUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HUserMutation_renameUser(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6996,6 +7554,10 @@ func (ec *executionContext) _HeadscaleMutation(ctx context.Context, sel ast.Sele
 		case "machine":
 
 			out.Values[i] = ec._HeadscaleMutation_machine(ctx, field, obj)
+
+		case "user":
+
+			out.Values[i] = ec._HeadscaleMutation_user(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -7048,6 +7610,26 @@ func (ec *executionContext) _HeadscaleQuery(ctx context.Context, sel ast.Selecti
 					}
 				}()
 				res = ec._HeadscaleQuery_machine(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "users":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HeadscaleQuery_users(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -8188,6 +8770,64 @@ func (ec *executionContext) marshalNHRoute2ᚖgithubᚗcomᚋxzzpigᚋheadscale�
 	return ec._HRoute(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNHUser2githubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx context.Context, sel ast.SelectionSet, v model.HUser) graphql.Marshaler {
+	return ec._HUser(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHUser2ᚕᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HUser) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUser(ctx context.Context, sel ast.SelectionSet, v *model.HUser) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HUser(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8580,6 +9220,13 @@ func (ec *executionContext) marshalOHUser2ᚖgithubᚗcomᚋxzzpigᚋheadscale�
 		return graphql.Null
 	}
 	return ec._HUser(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHUserMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHUserMutation(ctx context.Context, sel ast.SelectionSet, v *model.HUserMutation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HUserMutation(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOHeadscaleMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐHeadscaleMutation(ctx context.Context, sel ast.SelectionSet, v *model.HeadscaleMutation) graphql.Marshaler {

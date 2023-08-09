@@ -42,6 +42,34 @@ mutation setHMachineTags($machineId: Int!, $tags: [String!]!) {
   }
 }
 
+mutation createUser($userName: String!) {
+  headscale {
+    user {
+      createUser(name: $userName) {
+        id
+      }
+    }
+  }
+}
+
+mutation deleteUser($userName: String!) {
+  headscale {
+    user {
+      deleteUser(name: $userName)
+    }
+  }
+}
+
+mutation renameUser($userName: String!, $newName: String!) {
+  headscale {
+    user {
+      renameUser(oldName: $userName, newName: $newName) {
+        id
+      }
+    }
+  }
+}
+
 fragment HMachineResult on HMachine {
   id
   name
@@ -76,6 +104,20 @@ query hmachine($machineId: Int!) {
   headscale {
     machine(machineId: $machineId) {
       ...HMachineResult
+    }
+  }
+}
+
+query husers {
+  headscale {
+    users {
+      id
+      name
+      oldName: name
+      createdAt {
+        seconds
+        nanos
+      }
     }
   }
 }

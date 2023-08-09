@@ -10,8 +10,9 @@ func ToHUser(u *v1.User) *HUser {
 		return nil
 	}
 	return &HUser{
-		ID:   u.Id,
-		Name: u.Name,
+		ID:        u.Id,
+		Name:      u.Name,
+		CreatedAt: ToTimestamp(u.CreatedAt),
 	}
 }
 

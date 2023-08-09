@@ -91,3 +91,41 @@ func (c *HeadscaleClient) SetMachineTags(machineId uint64, tags []string) (*v1.S
 	}
 	return res, nil
 }
+
+func (c *HeadscaleClient) ListUsers() (*v1.ListUsersResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("ListUsers")
+	return c.Client.ListUsers(ctx, &v1.ListUsersRequest{})
+}
+
+func (c *HeadscaleClient) CreateUser(name string) (*v1.CreateUserResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("CreateUser", zap.String("name", name))
+	res, err := c.Client.CreateUser(ctx, &v1.CreateUserRequest{
+		Name: name,
+	})
+	return res, err
+}
+
+func (c *HeadscaleClient) DeleteUser(name string) error {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("DeleteUser", zap.String("name", name))
+	_, err := c.Client.DeleteUser(ctx, &v1.DeleteUserRequest{
+		Name: name,
+	})
+	return err
+}
+
+func (c *HeadscaleClient) RenameUser(oldName, newName string) (*v1.RenameUserResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("RenameUser", zap.String("oldName", oldName), zap.String("newName", newName))
+	res, err := c.Client.RenameUser(ctx, &v1.RenameUserRequest{
+		OldName: oldName,
+		NewName: newName,
+	})
+	return res, err
+}

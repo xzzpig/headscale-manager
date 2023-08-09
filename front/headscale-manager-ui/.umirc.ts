@@ -45,6 +45,11 @@ export default defineConfig({
       path: '/machine',
       component: './Machine',
     },
+    {
+      name: '用户',
+      path: '/user',
+      component: './User',
+    },
   ],
   npmClient: 'yarn',
 });
