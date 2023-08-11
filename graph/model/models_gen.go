@@ -24,6 +24,7 @@ type HMachineMutation struct {
 	RenameMachine  *HMachine `json:"renameMachine"`
 	DeleteMachine  bool      `json:"deleteMachine"`
 	SetMachineTags *HMachine `json:"setMachineTags"`
+	MoveMachine    *HMachine `json:"moveMachine"`
 }
 
 type HRoute struct {

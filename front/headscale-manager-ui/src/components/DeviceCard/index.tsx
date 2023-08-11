@@ -5,8 +5,9 @@ import { EventEmitter } from "events";
 import { debounce } from "lodash";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { HmachinesQueryResult, useDeleteHMachineMutation, useDeleteHRouteMutation, useEnableHRouteMutation, useRenameHMachineMutation, useSetHMachineTagsMutation } from "../../graphql/codegen";
+import { HmachinesQueryResult, useDeleteHMachineMutation, useDeleteHRouteMutation, useEnableHRouteMutation, useMoveHMachineMutation, useRenameHMachineMutation, useSetHMachineTagsMutation } from "../../graphql/codegen";
 import DeviceLastSeenIcon from "../DeviceLastSeenIcon";
+import { UserSelect } from "../UserSelect";
 const { Panel } = Collapse;
 
 type MachineType = NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<HmachinesQueryResult>["data"]>["headscale"]>["machines"]>[0]>
@@ -16,11 +17,19 @@ interface DeviceCardProps {
     eventEmitter: EventEmitter
 }
 
+function refreshMachines(eventEmitter: EventEmitter): Promise<void> {
+    return new Promise<void>((resolve, _) => {
+        eventEmitter.once("NEW_MACHINES", () => resolve())
+        eventEmitter.emit("DO_REFRESH_MACHINES")
+    })
+}
+
 const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
     const lastSeen = new Date(parseInt((machine?.lastSeen?.seconds + "" + machine?.lastSeen?.nanos).substring(0, 13)))
     const [renameMachine] = useRenameHMachineMutation()
     const [changeTags, { loading }] = useSetHMachineTagsMutation()
     const [deleteMachine] = useDeleteHMachineMutation()
+    const [moveMachine] = useMoveHMachineMutation()
     const doChangeTags = async (tags: string[]) => {
         await changeTags({
             variables: {
@@ -154,6 +163,20 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                     {
                         label: "所属用户",
                         dataIndex: ["user", "name"],
+                        render(dom, entity, index, action, schema) {
+                            return <UserSelect
+                                userName={entity.user?.name!!}
+                                onChange={async (newUser) => {
+                                    await moveMachine({
+                                        variables: {
+                                            machineID: machine.id,
+                                            userName: newUser
+                                        }
+                                    })
+                                    await refreshMachines(eventEmitter)
+                                }}
+                            />
+                        }
                     },
                     {
                         label: "路由",

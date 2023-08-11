@@ -53,6 +53,15 @@ func (r *hMachineMutationResolver) SetMachineTags(ctx context.Context, obj *mode
 	return model.ToHMachine(res.Machine), nil
 }
 
+// MoveMachine is the resolver for the moveMachine field.
+func (r *hMachineMutationResolver) MoveMachine(ctx context.Context, obj *model.HMachineMutation, machineID int, userName string) (*model.HMachine, error) {
+	res, err := headscale.Client.MoveMachine(uint64(machineID), userName)
+	if err != nil {
+		return nil, err
+	}
+	return model.ToHMachine(res.Machine), nil
+}
+
 // Machine is the resolver for the machine field.
 func (r *hRouteResolver) Machine(ctx context.Context, obj *model.HRoute) (*model.HMachine, error) {
 	panic(fmt.Errorf("not implemented: Machine - machine"))

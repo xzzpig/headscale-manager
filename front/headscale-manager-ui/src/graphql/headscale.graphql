@@ -32,6 +32,16 @@ mutation deleteHMachine($machineID: Int!) {
   }
 }
 
+mutation moveHMachine($machineID: Int!, $userName: String!) {
+  headscale {
+    machine {
+      moveMachine(machineId: $machineID, userName: $userName) {
+        id
+      }
+    }
+  }
+}
+
 mutation setHMachineTags($machineId: Int!, $tags: [String!]!) {
   headscale {
     machine {

@@ -305,6 +305,12 @@ type HMachineMutation{
 	): HMachine! @goField(
 	forceResolver: true
 )
+	moveMachine(
+		machineId: Int!
+		userName: String!
+	): HMachine! @goField(
+	forceResolver: true
+)
 }
 
 type HUserMutation{

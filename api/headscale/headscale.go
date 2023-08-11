@@ -78,6 +78,17 @@ func (c *HeadscaleClient) DeleteMachine(machineId uint64) error {
 	return err
 }
 
+func (c *HeadscaleClient) MoveMachine(machineId uint64, user string) (*v1.MoveMachineResponse, error) {
+	ctx, cancel := c.NewContext()
+	defer cancel()
+	logger.Debug("MoveMachine", zap.Uint64("machineId", machineId), zap.String("user", user))
+	res, err := c.Client.MoveMachine(ctx, &v1.MoveMachineRequest{
+		MachineId: machineId,
+		User:      user,
+	})
+	return res, err
+}
+
 func (c *HeadscaleClient) SetMachineTags(machineId uint64, tags []string) (*v1.SetTagsResponse, error) {
 	ctx, cancel := c.NewContext()
 	defer cancel()

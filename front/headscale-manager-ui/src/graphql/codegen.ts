@@ -32,6 +32,7 @@ export type HMachine = {
 export type HMachineMutation = {
   __typename?: 'HMachineMutation';
   deleteMachine: Scalars['Boolean'];
+  moveMachine: HMachine;
   renameMachine: HMachine;
   setMachineTags: HMachine;
 };
@@ -39,6 +40,12 @@ export type HMachineMutation = {
 
 export type HMachineMutationDeleteMachineArgs = {
   machineId: Scalars['Int'];
+};
+
+
+export type HMachineMutationMoveMachineArgs = {
+  machineId: Scalars['Int'];
+  userName: Scalars['String'];
 };
 
 
@@ -315,6 +322,14 @@ export type DeleteHMachineMutationVariables = Exact<{
 
 
 export type DeleteHMachineMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', machine?: { __typename?: 'HMachineMutation', deleteMachine: boolean } | null } | null };
+
+export type MoveHMachineMutationVariables = Exact<{
+  machineID: Scalars['Int'];
+  userName: Scalars['String'];
+}>;
+
+
+export type MoveHMachineMutation = { __typename?: 'Mutation', headscale?: { __typename?: 'HeadscaleMutation', machine?: { __typename?: 'HMachineMutation', moveMachine: { __typename?: 'HMachine', id: number } } | null } | null };
 
 export type SetHMachineTagsMutationVariables = Exact<{
   machineId: Scalars['Int'];
@@ -596,6 +611,44 @@ export function useDeleteHMachineMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteHMachineMutationHookResult = ReturnType<typeof useDeleteHMachineMutation>;
 export type DeleteHMachineMutationResult = Apollo.MutationResult<DeleteHMachineMutation>;
 export type DeleteHMachineMutationOptions = Apollo.BaseMutationOptions<DeleteHMachineMutation, DeleteHMachineMutationVariables>;
+export const MoveHMachineDocument = gql`
+    mutation moveHMachine($machineID: Int!, $userName: String!) {
+  headscale {
+    machine {
+      moveMachine(machineId: $machineID, userName: $userName) {
+        id
+      }
+    }
+  }
+}
+    `;
+export type MoveHMachineMutationFn = Apollo.MutationFunction<MoveHMachineMutation, MoveHMachineMutationVariables>;
+
+/**
+ * __useMoveHMachineMutation__
+ *
+ * To run a mutation, you first call `useMoveHMachineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMoveHMachineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [moveHMachineMutation, { data, loading, error }] = useMoveHMachineMutation({
+ *   variables: {
+ *      machineID: // value for 'machineID'
+ *      userName: // value for 'userName'
+ *   },
+ * });
+ */
+export function useMoveHMachineMutation(baseOptions?: Apollo.MutationHookOptions<MoveHMachineMutation, MoveHMachineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MoveHMachineMutation, MoveHMachineMutationVariables>(MoveHMachineDocument, options);
+      }
+export type MoveHMachineMutationHookResult = ReturnType<typeof useMoveHMachineMutation>;
+export type MoveHMachineMutationResult = Apollo.MutationResult<MoveHMachineMutation>;
+export type MoveHMachineMutationOptions = Apollo.BaseMutationOptions<MoveHMachineMutation, MoveHMachineMutationVariables>;
 export const SetHMachineTagsDocument = gql`
     mutation setHMachineTags($machineId: Int!, $tags: [String!]!) {
   headscale {
