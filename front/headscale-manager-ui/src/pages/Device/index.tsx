@@ -42,7 +42,10 @@ const reactNode: React.FC = () => {
     const doRefreshDebounce = useCallback(debounce(doRefresh, 500), [refetch])
 
     useEffect(() => {
-        eventEmitter.on("DO_REFRESH_MACHINES", () => {
+        eventEmitter.on("DO_REFRESH_MACHINES", (error) => {
+            if(error != null){
+                messageApi.error(error+"")
+            }
             doRefreshDebounce()
         })
     }, [eventEmitter, refetch])

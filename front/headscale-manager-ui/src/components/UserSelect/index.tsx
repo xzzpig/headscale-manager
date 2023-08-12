@@ -10,7 +10,7 @@ const UserSelect: React.FC<{
 
     const [changing, setChanging] = React.useState(false)
 
-    return <Select
+    return params.onChange != null ? <Select
         value={params.userName}
         bordered={false}
         options={users?.headscale?.users.map(u => ({ label: u.name, value: u.name }))}
@@ -22,7 +22,7 @@ const UserSelect: React.FC<{
             await params.onChange?.(value)
             setChanging(false)
         }}
-    />
+    /> : <>{params.userName}</>
 }
 
 export { UserSelect };

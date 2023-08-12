@@ -10,6 +10,7 @@ type ctxKey string
 const (
 	GIN_CONTEXT_KEY ctxKey = "GinContextKey"
 	LOADERS_KEY     ctxKey = "DataLoaders"
+	USER_INFO_KEY   ctxKey = "UserInfo"
 )
 
 func GetPtrFromContext[T any](ctx context.Context, key ctxKey) (*T, error) {

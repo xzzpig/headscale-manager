@@ -10,6 +10,7 @@ import (
 
 	"github.com/xzzpig/headscale-manager/api/headscale"
 	"github.com/xzzpig/headscale-manager/graph/model"
+	mycontext "github.com/xzzpig/headscale-manager/server/context"
 	"github.com/xzzpig/headscale-manager/service"
 )
 
@@ -28,16 +29,12 @@ func (r *hMachineResolver) Routes(ctx context.Context, obj *model.HMachine) ([]*
 
 // RenameMachine is the resolver for the renameMachine field.
 func (r *hMachineMutationResolver) RenameMachine(ctx context.Context, obj *model.HMachineMutation, machineID int, name string) (*model.HMachine, error) {
-	res, err := headscale.Client.RenameMachine(uint64(machineID), name)
-	if err != nil {
-		return nil, err
-	}
-	return model.ToHMachine(res.Machine), nil
+	return service.NewHeadscaleService(ctx).RenameMachine(uint64(machineID), name)
 }
 
 // DeleteMachine is the resolver for the deleteMachine field.
 func (r *hMachineMutationResolver) DeleteMachine(ctx context.Context, obj *model.HMachineMutation, machineID int) (bool, error) {
-	err := headscale.Client.DeleteMachine(uint64(machineID))
+	err := service.NewHeadscaleService(ctx).DeleteMachine(uint64(machineID))
 	if err != nil {
 		return false, err
 	}
@@ -114,24 +111,12 @@ func (r *hUserMutationResolver) RenameUser(ctx context.Context, obj *model.HUser
 
 // Machines is the resolver for the machines field.
 func (r *headscaleQueryResolver) Machines(ctx context.Context, obj *model.HeadscaleQuery) ([]*model.HMachine, error) {
-	result, err := headscale.Client.ListMachines()
-	if err != nil {
-		return nil, err
-	}
-	machines := make([]*model.HMachine, len(result.Machines))
-	for i, m := range result.Machines {
-		machines[i] = model.ToHMachine(m)
-	}
-	return machines, nil
+	return service.NewHeadscaleService(ctx).ListMachines()
 }
 
 // Machine is the resolver for the machine field.
 func (r *headscaleQueryResolver) Machine(ctx context.Context, obj *model.HeadscaleQuery, machineID int) (*model.HMachine, error) {
-	result, err := headscale.Client.GetMachine(uint64(machineID))
-	if err != nil {
-		return nil, err
-	}
-	return model.ToHMachine(result.Machine), nil
+	return service.NewHeadscaleService(ctx).GetMachine(uint64(machineID))
 }
 
 // Users is the resolver for the users field.
@@ -232,6 +217,15 @@ func (r *projectMutationResolver) SyncProjectRoute(ctx context.Context, obj *mod
 	return svc.SyncProjectRoute(projectID)
 }
 
+// UserInfo is the resolver for the userInfo field.
+func (r *queryResolver) UserInfo(ctx context.Context) (*model.UserInfo, error) {
+	userInfo, err := mycontext.GetPtrFromContext[model.UserInfo](ctx, mycontext.USER_INFO_KEY)
+	if err != nil {
+		return nil, err
+	}
+	return userInfo, nil
+}
+
 // Projects is the resolver for the projects field.
 func (r *queryResolver) Projects(ctx context.Context) ([]*model.Project, error) {
 	svc := service.NewProjectService(ctx)
@@ -296,6 +290,12 @@ func (r *syncResultResolver) Machine(ctx context.Context, obj *model.SyncResult)
 	return svc.ByIDWithLoader(&obj.MachineID)
 }
 
+// IsAdmin is the resolver for the isAdmin field.
+func (r *userInfoResolver) IsAdmin(ctx context.Context, obj *model.UserInfo) (*bool, error) {
+	admin := obj.IsAdmin()
+	return &admin, nil
+}
+
 // HMachine returns HMachineResolver implementation.
 func (r *Resolver) HMachine() HMachineResolver { return &hMachineResolver{r} }
 
@@ -338,6 +338,9 @@ func (r *Resolver) RouteMutation() RouteMutationResolver { return &routeMutation
 // SyncResult returns SyncResultResolver implementation.
 func (r *Resolver) SyncResult() SyncResultResolver { return &syncResultResolver{r} }
 
+// UserInfo returns UserInfoResolver implementation.
+func (r *Resolver) UserInfo() UserInfoResolver { return &userInfoResolver{r} }
+
 type hMachineResolver struct{ *Resolver }
 type hMachineMutationResolver struct{ *Resolver }
 type hRouteResolver struct{ *Resolver }
@@ -352,3 +355,4 @@ type queryResolver struct{ *Resolver }
 type routeResolver struct{ *Resolver }
 type routeMutationResolver struct{ *Resolver }
 type syncResultResolver struct{ *Resolver }
+type userInfoResolver struct{ *Resolver }

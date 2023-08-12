@@ -1,5 +1,6 @@
 import { CheckCircleOutlined, DeleteFilled, EditFilled, LoadingOutlined, MinusCircleOutlined, MoreOutlined, PlusOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import { ProDescriptions } from "@ant-design/pro-components";
+import { useAccess } from "@umijs/max";
 import { Col, Collapse, Dropdown, Input, InputRef, List, Modal, Row, Space, Tag, Tooltip } from "antd";
 import { EventEmitter } from "events";
 import { debounce } from "lodash";
@@ -36,6 +37,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                 machineId: machine.id,
                 tags: tags,
             }
+        }).catch(e => {
+            eventEmitter.emit("DO_REFRESH_MACHINES", e)
         })
         eventEmitter.emit("DO_REFRESH_MACHINES")
     }
@@ -69,9 +72,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
 
     const [modal, contextHolder] = Modal.useModal();
 
+    const access = useAccess();
+
     return (
         <Collapse key={machine.id} expandIconPosition="end" >
-            {contextHolder}
+            {[contextHolder]}
             <Panel
                 key={machine.id}
                 header={
@@ -82,26 +87,28 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                                     machineId: machine.id,
                                     newName: newName
                                 }
+                            }).catch(e => {
+                                eventEmitter.emit("DO_REFRESH_MACHINES", e)
                             })
                             return new Promise<void>((resolve, reject) => {
-                                eventEmitter.emit("DO_REFRESH_MACHINES")
                                 eventEmitter.once("NEW_MACHINES", () => {
                                     setNameInput(false)
                                     resolve()
                                 })
+                                eventEmitter.emit("DO_REFRESH_MACHINES")
                             })
                         }} /></Col>
-                        <Col span={18}><Space wrap size={0}>{[<NewDeviceTag key="NEW" onInputConfirm={async (value) => {
+                        <Col span={18}><Space wrap size={0}>{[access.isAdmin ? <NewDeviceTag key="NEW" onInputConfirm={async (value) => {
                             await new Promise<void>((resolve, reject) => {
+                                eventEmitter.once("NEW_MACHINES", () => resolve())
                                 addTag(value)
-                                eventEmitter.once("NEW_MACHINES", () => resolve())
                             })
-                        }}>NEW</NewDeviceTag>, ...machine.forcedTags.map(tag => <DeviceTag key={tag} title={tag.replace("tag:", "")} onClose={() => {
+                        }}>NEW</NewDeviceTag> : null, ...machine.forcedTags.map(tag => <DeviceTag key={tag} title={tag.replace("tag:", "")} onClose={access.isAdmin ? () => {
                             return new Promise<void>((resolve, reject) => {
-                                removeTag(tag)
                                 eventEmitter.once("NEW_MACHINES", () => resolve())
+                                removeTag(tag)
                             })
-                        }} />)]}</Space></Col>
+                        } : undefined} />)]}</Space></Col>
                     </Row>}
                 extra={
                     <Space onClick={e => e.stopPropagation()}>
@@ -127,6 +134,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                                                         variables: {
                                                             machineID: machine.id
                                                         }
+                                                    }).catch(e => {
+                                                        eventEmitter.emit("DO_REFRESH_MACHINES", e)
                                                     })
                                                     eventEmitter.emit("DO_REFRESH_MACHINES")
                                                 },
@@ -166,7 +175,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                         render(dom, entity, index, action, schema) {
                             return <UserSelect
                                 userName={entity.user?.name!!}
-                                onChange={async (newUser) => {
+                                onChange={access.isAdmin ? async (newUser) => {
                                     await moveMachine({
                                         variables: {
                                             machineID: machine.id,
@@ -174,7 +183,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                                         }
                                     })
                                     await refreshMachines(eventEmitter)
-                                }}
+                                } : undefined}
                             />
                         }
                     },
@@ -200,13 +209,14 @@ const RouteButton: React.FC<{
     const [refreshing, setRefreshing] = useState(false)
     const [modal, contextHolder] = Modal.useModal();
     const [deleteRoute] = useDeleteHRouteMutation()
+    const access = useAccess()
 
     const action = route.enabled ? "禁用" : "启用"
 
     return <Dropdown.Button
         type={route.enabled ? "default" : "dashed"}
         menu={{
-            items: [
+            items: access.isAdmin ? [
                 {
                     label: '删除',
                     key: 'delete',
@@ -226,9 +236,10 @@ const RouteButton: React.FC<{
                         })
                     }
                 },
-            ]
+            ] : []
         }}
         onClick={() => {
+            if (!access.isAdmin) return;
             if (refreshing) return
             setRefreshing(true)
             eventEmitter.once("NEW_MACHINES", () => {
@@ -270,7 +281,7 @@ const DeviceTag: React.FC<DeviceTagProps> = ({ title, maxLength, onClose }) => {
     const [closing, setClosing] = useState(false)
 
     const tagEle = <Tag
-        closable
+        closable={onClose != null}
         closeIcon={closing ? <LoadingOutlined spin /> : undefined}
         onClose={(e) => {
             e.preventDefault()

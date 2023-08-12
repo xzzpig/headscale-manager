@@ -3,6 +3,7 @@ package oidc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -11,9 +12,12 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
 	"github.com/xzzpig/headscale-manager/config"
+	"github.com/xzzpig/headscale-manager/graph/model"
 	"github.com/xzzpig/headscale-manager/util"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
+
+	mycontext "github.com/xzzpig/headscale-manager/server/context"
 )
 
 var oauth2Config *oauth2.Config
@@ -36,11 +40,18 @@ var oidcConfig struct {
 }
 var logger *zap.Logger
 
+var defaultUserInfo model.UserInfo
+
 func SetupGin(r *gin.Engine) {
 	if oauth2Config == nil {
 		Setup()
 	}
 	if !oidcConfig.enable {
+		defaultUserInfo = model.UserInfo{
+			Name:   os.Getenv(config.OIDC_DEFAULT_USER),
+			Groups: []string{},
+		}
+		r.Use(handleDisabled)
 		return
 	}
 	r.Use(handleRedirect)
@@ -153,7 +164,7 @@ func handleRedirect(c *gin.Context) {
 		doRedirect(c)
 		return
 	}
-	_, err = verifier.Verify(c, token)
+	idtoken, err := verifier.Verify(c, token)
 	if err != nil {
 		logger.Debug("token invalid, redirecting", zap.Error(err))
 		doRedirect(c)
@@ -169,12 +180,20 @@ func handleRedirect(c *gin.Context) {
 	// 	return
 	// }
 	// setToken(c, newToken)
-	// claims := make(map[string]interface{})
-	// if err := idtoken.Claims(&claims); err != nil {
-	// 	c.Error(err)
-	// 	return
-	// }
-	// fmt.Println(claims)
+	claims := model.UserInfo{}
+	if err := idtoken.Claims(&claims); err != nil {
+		c.Error(err)
+		return
+	}
+	fmt.Println(claims.IsAdmin())
+	ctx := context.WithValue(c.Request.Context(), mycontext.USER_INFO_KEY, &claims)
+	c.Request = c.Request.WithContext(ctx)
+	c.Next()
+}
+
+func handleDisabled(c *gin.Context) {
+	ctx := context.WithValue(c.Request.Context(), mycontext.USER_INFO_KEY, &defaultUserInfo)
+	c.Request = c.Request.WithContext(ctx)
 	c.Next()
 }
 

@@ -115,3 +115,12 @@ func ArrContains[T comparable](arr []T, obj T) bool {
 	}
 	return false
 }
+
+func ArrContainsAny[T comparable](arr []T, objs []T) bool {
+	for _, obj := range objs {
+		if ArrContains(arr, obj) {
+			return true
+		}
+	}
+	return false
+}

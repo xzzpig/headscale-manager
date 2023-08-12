@@ -236,6 +236,7 @@ export type Query = {
   machines?: Maybe<Array<Maybe<Machine>>>;
   projects?: Maybe<Array<Maybe<Project>>>;
   routes?: Maybe<Array<Maybe<Route>>>;
+  userInfo: UserInfo;
 };
 
 /** 路由 */
@@ -291,6 +292,15 @@ export type Timestamp = {
   __typename?: 'Timestamp';
   nanos: Scalars['Int'];
   seconds: Scalars['Int'];
+};
+
+/** 用户信息 */
+export type UserInfo = {
+  __typename?: 'UserInfo';
+  email: Scalars['String'];
+  groups: Array<Scalars['String']>;
+  isAdmin?: Maybe<Scalars['Boolean']>;
+  name: Scalars['String'];
 };
 
 export type EnableHRouteMutationVariables = Exact<{
@@ -443,6 +453,11 @@ export type RoutesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type RoutesQuery = { __typename?: 'Query', routes?: Array<{ __typename?: 'Route', id?: string | null, name?: string | null, description?: string | null, projectID?: string | null, project?: { __typename?: 'Project', id?: string | null, name?: string | null } | null } | null> | null };
+
+export type UserinfoQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UserinfoQuery = { __typename?: 'Query', userInfo: { __typename?: 'UserInfo', name: string, email: string, groups: Array<string>, isAdmin?: boolean | null } };
 
 export const HMachineResultFragmentDoc = gql`
     fragment HMachineResult on HMachine {
@@ -1294,3 +1309,40 @@ export function useRoutesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Rou
 export type RoutesQueryHookResult = ReturnType<typeof useRoutesQuery>;
 export type RoutesLazyQueryHookResult = ReturnType<typeof useRoutesLazyQuery>;
 export type RoutesQueryResult = Apollo.QueryResult<RoutesQuery, RoutesQueryVariables>;
+export const UserinfoDocument = gql`
+    query userinfo {
+  userInfo {
+    name
+    email
+    groups
+    isAdmin
+  }
+}
+    `;
+
+/**
+ * __useUserinfoQuery__
+ *
+ * To run a query within a React component, call `useUserinfoQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUserinfoQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUserinfoQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useUserinfoQuery(baseOptions?: Apollo.QueryHookOptions<UserinfoQuery, UserinfoQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<UserinfoQuery, UserinfoQueryVariables>(UserinfoDocument, options);
+      }
+export function useUserinfoLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UserinfoQuery, UserinfoQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<UserinfoQuery, UserinfoQueryVariables>(UserinfoDocument, options);
+        }
+export type UserinfoQueryHookResult = ReturnType<typeof useUserinfoQuery>;
+export type UserinfoLazyQueryHookResult = ReturnType<typeof useUserinfoLazyQuery>;
+export type UserinfoQueryResult = Apollo.QueryResult<UserinfoQuery, UserinfoQueryVariables>;

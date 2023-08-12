@@ -167,3 +167,11 @@ type Timestamp struct {
 	Seconds int `json:"seconds"`
 	Nanos   int `json:"nanos"`
 }
+
+// 用户信息
+type UserInfo struct {
+	Name    string   `json:"name"`
+	Email   string   `json:"email"`
+	Groups  []string `json:"groups"`
+	isAdmin *bool    `json:"-"`
+}

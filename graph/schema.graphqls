@@ -127,6 +127,22 @@ type Timestamp{
 }
 
 """
+用户信息
+"""
+type UserInfo{
+	name: String!
+	email: String!
+	groups: [String!]!
+	isAdmin: Boolean @goField(
+	name: "isAdmin"
+	forceResolver: true
+) @goTag(
+	key: "json"
+	value: "-"
+)
+}
+
+"""
 Headscale Machine
 """
 type HMachine{
@@ -202,24 +218,23 @@ type HeadscaleQuery{
 	): HMachine @goField(
 	forceResolver: true
 )
-	users: [HUser!]! @goField(
-	forceResolver: true
-)
+	users: [HUser!]! @goField(forceResolver: true) @needAdmin
 }
 
 type Query{
-	projects: [Project]
-	machines: [Machine]
-	routes: [Route]
+	userInfo: UserInfo!
+	projects: [Project] @needAdmin
+	machines: [Machine] @needAdmin
+	routes: [Route] @needAdmin
 	headscale: HeadscaleQuery @goField(
 	forceResolver: true
 )
 }
 
 type Mutation{
-	project: ProjectMutation
-	route: RouteMutation
-	machine: MachineMutation
+	project: ProjectMutation @needAdmin(quiet: false)
+	route: RouteMutation @needAdmin(quiet: false)
+	machine: MachineMutation @needAdmin(quiet: false)
 	headscale: HeadscaleMutation
 }
 
@@ -268,9 +283,9 @@ type MachineMutation{
 }
 
 type HeadscaleMutation{
-	route: HRouteMutation
-	machine: HMachineMutation
-	user: HUserMutation
+	route: HRouteMutation @needAdmin(quiet: false)
+	machine: HMachineMutation 
+	user: HUserMutation @needAdmin(quiet: false)
 }
 
 type HRouteMutation{
@@ -304,13 +319,13 @@ type HMachineMutation{
 		tags: [String!]!
 	): HMachine! @goField(
 	forceResolver: true
-)
+) @needAdmin(quiet: false)
 	moveMachine(
 		machineId: Int!
 		userName: String!
 	): HMachine! @goField(
 	forceResolver: true
-)
+) @needAdmin(quiet: false)
 }
 
 type HUserMutation{
@@ -361,6 +376,10 @@ directive @goField(
 	forceResolver: Boolean
 	name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @needAdmin(
+	quiet: Boolean! = true
+) on FIELD_DEFINITION
 
 interface HasID{
 	id: ID
