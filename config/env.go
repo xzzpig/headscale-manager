@@ -4,41 +4,54 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 
 	_ "embed"
 )
+
+type Config struct {
+	Environment string `envconfig:"GO_ENV"`
+	Mongo       struct {
+		Uri    string `envconfig:"MONGO_URI"`
+		Timout int64  `envconfig:"MONGO_TIMEOUT"`
+	}
+	Headscale struct {
+		Url     string `envconfig:"HEADSCALE_URL"`
+		Key     string `envconfig:"HEADSCALE_KEY"`
+		Timeout int64  `envconfig:"HEADSCALE_TIMEOUT"`
+	}
+	Endpoints struct {
+		GraphQL           string `envconfig:"ENDPOINT_GRAPHQL"`
+		GraphQLPlayground string `envconfig:"ENDPOINT_GRAPHQL_PLAYGROUND"`
+		UI                string `envconfig:"ENDPOINT_UI"`
+		OidcCallback      string `envconfig:"ENDPOINT_OIDC_CALLBACK"`
+	}
+	Oidc struct {
+		Enable       bool     `envconfig:"OIDC_ENABLE"`
+		ClientId     string   `envconfig:"OIDC_CLIENT_ID"`
+		ClientSecret string   `envconfig:"OIDC_CLIENT_SECRET"`
+		IssuerUrl    string   `envconfig:"OIDC_ISSUER_URL"`
+		RedirectUrl  string   `envconfig:"OIDC_REDIRECT_URL"`
+		Scopes       []string `envconfig:"OIDC_SCOPES"`
+		OriginCookie string   `envconfig:"OIDC_ORIGIN_COOKIE"`
+		DefaultUser  string   `envconfig:"OIDC_DEFAULT_USER"`
+	}
+	Auth struct {
+		CookieKey string `envconfig:"AUTH_COOKIE_KEY"`
+		HeaderKey string `envconfig:"AUTH_HEADER_KEY"`
+	}
+	Admin struct {
+		Groups []string `envconfig:"ADMIN_GROUPS"`
+		Users  []string `envconfig:"ADMIN_USERS"`
+	}
+}
+
+var config Config
 
 type EnvKey = string
 
 const (
 	GO_ENV EnvKey = "GO_ENV"
-
-	MONGO_URI     EnvKey = "MONGO_URI"
-	MONGO_TIMEOUT EnvKey = "MONGO_TIMEOUT"
-
-	HEADSCALE_URL     EnvKey = "HEADSCALE_URL"
-	HEADSCALE_KEY     EnvKey = "HEADSCALE_KEY"
-	HEADSCALE_TIMEOUT EnvKey = "HEADSCALE_TIMEOUT"
-
-	ENDPOINT_GRAPHQL            EnvKey = "ENDPOINT_GRAPHQL"
-	ENDPOINT_GRAPHQL_PLAYGROUND EnvKey = "ENDPOINT_GRAPHQL_PLAYGROUND"
-	ENDPOINT_UI                 EnvKey = "ENDPOINT_UI"
-	ENDPOINT_OIDC_CALLBACK      EnvKey = "ENDPOINT_OIDC_CALLBACK"
-
-	OIDC_ENABLE        EnvKey = "OIDC_ENABLE"
-	OIDC_CLIENT_ID     EnvKey = "OIDC_CLIENT_ID"
-	OIDC_CLIENT_SECRET EnvKey = "OIDC_CLIENT_SECRET"
-	OIDC_ISSUER_URL    EnvKey = "OIDC_ISSUER_URL"
-	OIDC_REDIRECT_URL  EnvKey = "OIDC_REDIRECT_URL"
-	OIDC_SCOPES        EnvKey = "OIDC_SCOPES"
-	OIDC_ORIGIN_COOKIE EnvKey = "OIDC_ORIGIN_COOKIE"
-	OIDC_DEFAULT_USER  EnvKey = "OIDC_DEFAULT_USER"
-
-	AUTH_COOKIE_KEY EnvKey = "AUTH_COOKIE_KEY"
-	AUTH_HEADER_KEY EnvKey = "AUTH_HEADER_KEY"
-
-	ADMIN_GROUPS EnvKey = "ADMIN_GROUPS"
-	ADMIN_USERS  EnvKey = "ADMIN_USERS"
 )
 
 //go:embed .env
@@ -62,4 +75,13 @@ func SetupEnv() {
 			os.Setenv(k, v)
 		}
 	}
+
+	err = envconfig.Process("hsm", &config)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GetConfig() *Config {
+	return &config
 }

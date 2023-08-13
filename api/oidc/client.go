@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -48,7 +46,7 @@ func SetupGin(r *gin.Engine) {
 	}
 	if !oidcConfig.enable {
 		defaultUserInfo = model.UserInfo{
-			Name:   os.Getenv(config.OIDC_DEFAULT_USER),
+			Name:   config.GetConfig().Oidc.DefaultUser,
 			Groups: []string{},
 		}
 		r.Use(handleDisabled)
@@ -60,20 +58,20 @@ func SetupGin(r *gin.Engine) {
 
 func setupConfig() {
 	logger = zap.L().Named("oidc")
-	oidcConfig.enable = os.Getenv(config.OIDC_ENABLE) == "true"
+	oidcConfig.enable = config.GetConfig().Oidc.Enable
 	if !oidcConfig.enable {
 		return
 	}
 	logger.Info("oidc is enabled, setting up")
-	oidcConfig.callbackEndpoint = os.Getenv(config.ENDPOINT_OIDC_CALLBACK)
-	oidcConfig.clientId = os.Getenv(config.OIDC_CLIENT_ID)
-	oidcConfig.clientSecret = os.Getenv(config.OIDC_CLIENT_SECRET)
-	oidcConfig.issuerUrl = os.Getenv(config.OIDC_ISSUER_URL)
-	oidcConfig.redirectUrl = os.Getenv(config.OIDC_REDIRECT_URL)
-	oidcConfig.scopes = strings.Split(os.Getenv(config.OIDC_SCOPES), ",")
-	oidcConfig.cookieKey = os.Getenv(config.AUTH_COOKIE_KEY)
-	oidcConfig.headerKey = os.Getenv(config.AUTH_HEADER_KEY)
-	oidcConfig.originUrlKey = os.Getenv(config.OIDC_ORIGIN_COOKIE)
+	oidcConfig.callbackEndpoint = config.GetConfig().Endpoints.OidcCallback
+	oidcConfig.clientId = config.GetConfig().Oidc.ClientId
+	oidcConfig.clientSecret = config.GetConfig().Oidc.ClientSecret
+	oidcConfig.issuerUrl = config.GetConfig().Oidc.IssuerUrl
+	oidcConfig.redirectUrl = config.GetConfig().Oidc.RedirectUrl
+	oidcConfig.scopes = config.GetConfig().Oidc.Scopes
+	oidcConfig.cookieKey = config.GetConfig().Auth.CookieKey
+	oidcConfig.headerKey = config.GetConfig().Auth.HeaderKey
+	oidcConfig.originUrlKey = config.GetConfig().Oidc.OriginCookie
 
 	if oidcConfig.callbackEndpoint == "" {
 		logger.Panic("oidc callback endpoint is empty")

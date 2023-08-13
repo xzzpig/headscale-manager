@@ -32,7 +32,7 @@ func graphqlHandler() gin.HandlerFunc {
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", os.Getenv(config.ENDPOINT_GRAPHQL))
+	h := playground.Handler("GraphQL", config.GetConfig().Endpoints.GraphQL)
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -59,7 +59,7 @@ var myConfig = ""
 
 func initConfig() {
 	configMap := make(map[string]string)
-	configMap["graphqlEndpoint"] = os.Getenv(config.ENDPOINT_GRAPHQL)
+	configMap["graphqlEndpoint"] = config.GetConfig().Endpoints.GraphQL
 	str, err := json.Marshal(configMap)
 	if err != nil {
 		panic(err)
@@ -72,9 +72,9 @@ func Run() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	initConfig()
-	graphqlBase := os.Getenv(config.ENDPOINT_GRAPHQL)
-	playgroundBase := os.Getenv(config.ENDPOINT_GRAPHQL_PLAYGROUND)
-	uiBase := strings.TrimSuffix(os.Getenv(config.ENDPOINT_UI), "/")
+	graphqlBase := config.GetConfig().Endpoints.GraphQL
+	playgroundBase := config.GetConfig().Endpoints.GraphQLPlayground
+	uiBase := strings.TrimSuffix(config.GetConfig().Endpoints.UI, "/")
 
 	// Setting up Gin
 	r := gin.Default()

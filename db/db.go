@@ -2,8 +2,6 @@ package db
 
 import (
 	"context"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/xzzpig/headscale-manager/config"
@@ -33,11 +31,8 @@ var logger *zap.Logger
 
 func Connect() {
 	logger = zap.L().Named("db")
-	timeout, err := strconv.ParseInt(os.Getenv(config.MONGO_TIMEOUT), 10, 64)
-	if err != nil {
-		logger.Panic("Invalid mongo timeout", zap.Error(err))
-	}
-	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv(config.MONGO_URI)))
+	timeout := config.GetConfig().Mongo.Timout
+	client, err := mongo.NewClient(options.Client().ApplyURI(config.GetConfig().Mongo.Uri))
 	if err != nil {
 		logger.Panic("Failed to create mongo client", zap.Error(err))
 	}

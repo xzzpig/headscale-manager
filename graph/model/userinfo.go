@@ -1,9 +1,6 @@
 package model
 
 import (
-	"os"
-	"strings"
-
 	"github.com/xzzpig/headscale-manager/config"
 	"github.com/xzzpig/headscale-manager/util"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,7 +10,7 @@ func (c *UserInfo) IsAdmin() bool {
 	if c.isAdmin == nil {
 		c.isAdmin = new(bool)
 
-		*c.isAdmin = util.ArrContainsAny(strings.Split(os.Getenv(config.ADMIN_GROUPS), ","), c.Groups) || util.ArrContains(strings.Split(os.Getenv(config.ADMIN_USERS), ","), c.Name)
+		*c.isAdmin = util.ArrContainsAny(config.GetConfig().Admin.Groups, c.Groups) || util.ArrContains(config.GetConfig().Admin.Users, c.Name)
 	}
 	return *c.isAdmin
 }

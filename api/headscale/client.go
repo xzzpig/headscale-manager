@@ -3,9 +3,6 @@ package headscale
 import (
 	"context"
 	"crypto/tls"
-	"log"
-	"os"
-	"strconv"
 	"time"
 
 	headscale "github.com/juanfont/headscale/gen/go/headscale/v1"
@@ -45,10 +42,7 @@ func SetupHeadscaleClient() {
 	if err != nil {
 		logger.Panic("Failed to create headscale client", zap.Error(err))
 	}
-	timeout, err := strconv.ParseInt(os.Getenv(config.HEADSCALE_TIMEOUT), 10, 64)
-	if err != nil {
-		logger.Panic("Invalid headscale timeout", zap.Error(err))
-	}
+	timeout := config.GetConfig().Headscale.Timeout
 	Client = &HeadscaleClient{
 		Client:  _client,
 		conn:    _conn,
@@ -58,13 +52,7 @@ func SetupHeadscaleClient() {
 }
 
 func NewHeadscaleServiceClient() (headscale.HeadscaleServiceClient, *grpc.ClientConn, context.CancelFunc, error) {
-	timeout, err := strconv.ParseInt(os.Getenv(config.HEADSCALE_TIMEOUT), 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	timeout := config.GetConfig().Headscale.Timeout
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 
@@ -72,7 +60,7 @@ func NewHeadscaleServiceClient() (headscale.HeadscaleServiceClient, *grpc.Client
 		grpc.WithBlock(),
 	}
 
-	apiKey := os.Getenv(config.HEADSCALE_KEY)
+	apiKey := config.GetConfig().Headscale.Key
 	grpcOptions = append(grpcOptions,
 		grpc.WithPerRPCCredentials(tokenAuth{
 			token: apiKey,
@@ -87,7 +75,7 @@ func NewHeadscaleServiceClient() (headscale.HeadscaleServiceClient, *grpc.Client
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 	)
 
-	conn, err := grpc.DialContext(ctx, os.Getenv(config.HEADSCALE_URL), grpcOptions...)
+	conn, err := grpc.DialContext(ctx, config.GetConfig().Headscale.Url, grpcOptions...)
 	if err != nil {
 		return nil, nil, cancel, err
 	}
