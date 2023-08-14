@@ -236,6 +236,13 @@ type Mutation{
 	route: RouteMutation @needAdmin(quiet: false)
 	machine: MachineMutation @needAdmin(quiet: false)
 	headscale: HeadscaleMutation
+	acl: ACLMutation @needAdmin(quiet: false)
+}
+
+type ACLMutation{
+	triggerUpdate: Boolean! @goField(
+	forceResolver: true
+)	
 }
 
 type ProjectMutation{

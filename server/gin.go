@@ -95,6 +95,7 @@ func Run() {
 		c.Header("Cache-Control", "no-cache, no-store")
 		c.String(http.StatusOK, "window.myconfig = %s", myConfig)
 	})
+	initACL(r)
 	r.Use(static.Serve(uiBase+"/", front.NewStaticFileSystem()))
 	r.Run()
 }

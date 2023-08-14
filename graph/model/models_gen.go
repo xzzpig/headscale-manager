@@ -7,6 +7,10 @@ type HasID interface {
 	GetID() *string
 }
 
+type ACLMutation struct {
+	TriggerUpdate bool `json:"triggerUpdate"`
+}
+
 // Headscale Machine
 type HMachine struct {
 	ID          int        `json:"id"`

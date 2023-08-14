@@ -103,3 +103,24 @@ func TestLoader(t *testing.T) {
 	t.Log(string(str))
 
 }
+
+func TestGenerateACL(t *testing.T) {
+	svc := service.NewHeadscaleService(context.Background())
+	acl, err := svc.GenerateACL()
+	if err != nil {
+		t.Error(err)
+	}
+	str, err := json.MarshalIndent(acl, "", "  ")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(string(str))
+}
+
+func TestTriggerUpdate(t *testing.T) {
+	svc := service.NewHeadscaleService(context.Background())
+	err := svc.TriggerUpdate()
+	if err != nil {
+		t.Error(err)
+	}
+}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
+	"github.com/xzzpig/headscale-manager/api/oidc/whitelist"
 	"github.com/xzzpig/headscale-manager/config"
 	"github.com/xzzpig/headscale-manager/graph/model"
 	"github.com/xzzpig/headscale-manager/util"
@@ -109,6 +110,8 @@ func Setup() {
 		return
 	}
 
+	whitelist.AddWhitelist(oidcConfig.callbackEndpoint)
+
 	ctx := context.Background()
 	provider, err := oidc.NewProvider(ctx, oidcConfig.issuerUrl)
 	if err != nil {
@@ -149,7 +152,7 @@ func doRedirect(c *gin.Context) {
 }
 
 func handleRedirect(c *gin.Context) {
-	if c.Request.URL.Path == oidcConfig.callbackEndpoint {
+	if whitelist.IsInWhitelist(c.Request.URL.Path) {
 		c.Next()
 		return
 	}

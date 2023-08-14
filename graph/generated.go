@@ -37,6 +37,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	ACLMutation() ACLMutationResolver
 	HMachine() HMachineResolver
 	HMachineMutation() HMachineMutationResolver
 	HRoute() HRouteResolver
@@ -59,6 +60,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	ACLMutation struct {
+		TriggerUpdate func(childComplexity int) int
+	}
+
 	HMachine struct {
 		ForcedTags  func(childComplexity int) int
 		GivenName   func(childComplexity int) int
@@ -130,6 +135,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		ACL       func(childComplexity int) int
 		Headscale func(childComplexity int) int
 		Machine   func(childComplexity int) int
 		Project   func(childComplexity int) int
@@ -197,6 +203,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type ACLMutationResolver interface {
+	TriggerUpdate(ctx context.Context, obj *model.ACLMutation) (bool, error)
+}
 type HMachineResolver interface {
 	Routes(ctx context.Context, obj *model.HMachine) ([]*model.HRoute, error)
 }
@@ -232,6 +241,7 @@ type MutationResolver interface {
 	Route(ctx context.Context) (*model.RouteMutation, error)
 	Machine(ctx context.Context) (*model.MachineMutation, error)
 	Headscale(ctx context.Context) (*model.HeadscaleMutation, error)
+	ACL(ctx context.Context) (*model.ACLMutation, error)
 }
 type ProjectResolver interface {
 	Machine(ctx context.Context, obj *model.Project) (*model.Machine, error)
@@ -283,6 +293,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "ACLMutation.triggerUpdate":
+		if e.complexity.ACLMutation.TriggerUpdate == nil {
+			break
+		}
+
+		return e.complexity.ACLMutation.TriggerUpdate(childComplexity), true
 
 	case "HMachine.forcedTags":
 		if e.complexity.HMachine.ForcedTags == nil {
@@ -623,6 +640,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MachineMutation.SaveMachine(childComplexity, args["machineInput"].(*model.MachineInput)), true
+
+	case "Mutation.acl":
+		if e.complexity.Mutation.ACL == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ACL(childComplexity), true
 
 	case "Mutation.headscale":
 		if e.complexity.Mutation.Headscale == nil {
@@ -1423,6 +1447,50 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _ACLMutation_triggerUpdate(ctx context.Context, field graphql.CollectedField, obj *model.ACLMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ACLMutation_triggerUpdate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ACLMutation().TriggerUpdate(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ACLMutation_triggerUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ACLMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _HMachine_id(ctx context.Context, field graphql.CollectedField, obj *model.HMachine) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HMachine_id(ctx, field)
@@ -3885,6 +3953,75 @@ func (ec *executionContext) fieldContext_Mutation_headscale(ctx context.Context,
 				return ec.fieldContext_HeadscaleMutation_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HeadscaleMutation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_acl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_acl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().ACL(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			quiet, err := ec.unmarshalNBoolean2bool(ctx, false)
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.NeedAdmin == nil {
+				return nil, errors.New("directive needAdmin is not implemented")
+			}
+			return ec.directives.NeedAdmin(ctx, nil, directive0, quiet)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.ACLMutation); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/xzzpig/headscale-manager/graph/model.ACLMutation`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ACLMutation)
+	fc.Result = res
+	return ec.marshalOACLMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐACLMutation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_acl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "triggerUpdate":
+				return ec.fieldContext_ACLMutation_triggerUpdate(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ACLMutation", field.Name)
 		},
 	}
 	return fc, nil
@@ -7806,6 +7943,76 @@ func (ec *executionContext) _HasID(ctx context.Context, sel ast.SelectionSet, ob
 
 // region    **************************** object.gotpl ****************************
 
+var aCLMutationImplementors = []string{"ACLMutation"}
+
+func (ec *executionContext) _ACLMutation(ctx context.Context, sel ast.SelectionSet, obj *model.ACLMutation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aCLMutationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ACLMutation")
+		case "triggerUpdate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ACLMutation_triggerUpdate(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var hMachineImplementors = []string{"HMachine"}
 
 func (ec *executionContext) _HMachine(ctx context.Context, sel ast.SelectionSet, obj *model.HMachine) graphql.Marshaler {
@@ -8834,6 +9041,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "headscale":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_headscale(ctx, field)
+			})
+		case "acl":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acl(ctx, field)
 			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -10605,6 +10816,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOACLMutation2ᚖgithubᚗcomᚋxzzpigᚋheadscaleᚑmanagerᚋgraphᚋmodelᚐACLMutation(ctx context.Context, sel ast.SelectionSet, v *model.ACLMutation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ACLMutation(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

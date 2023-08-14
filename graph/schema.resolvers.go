@@ -9,10 +9,20 @@ import (
 	"fmt"
 
 	"github.com/xzzpig/headscale-manager/api/headscale"
+	"github.com/xzzpig/headscale-manager/config"
 	"github.com/xzzpig/headscale-manager/graph/model"
 	mycontext "github.com/xzzpig/headscale-manager/server/context"
 	"github.com/xzzpig/headscale-manager/service"
 )
+
+// TriggerUpdate is the resolver for the triggerUpdate field.
+func (r *aCLMutationResolver) TriggerUpdate(ctx context.Context, obj *model.ACLMutation) (bool, error) {
+	err := service.NewHeadscaleService(ctx).TriggerUpdate()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
 // Routes is the resolver for the routes field.
 func (r *hMachineResolver) Routes(ctx context.Context, obj *model.HMachine) ([]*model.HRoute, error) {
@@ -84,29 +94,17 @@ func (r *hRouteMutationResolver) DeleteRoute(ctx context.Context, obj *model.HRo
 
 // CreateUser is the resolver for the createUser field.
 func (r *hUserMutationResolver) CreateUser(ctx context.Context, obj *model.HUserMutation, name string) (*model.HUser, error) {
-	res, err := headscale.Client.CreateUser(name)
-	if err != nil {
-		return nil, err
-	}
-	return model.ToHUser(res.User), nil
+	return service.NewHeadscaleService(ctx).CreateUser(name)
 }
 
 // DeleteUser is the resolver for the deleteUser field.
 func (r *hUserMutationResolver) DeleteUser(ctx context.Context, obj *model.HUserMutation, name string) (bool, error) {
-	err := headscale.Client.DeleteUser(name)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
+	return service.NewHeadscaleService(ctx).DeleteUser(name)
 }
 
 // RenameUser is the resolver for the renameUser field.
 func (r *hUserMutationResolver) RenameUser(ctx context.Context, obj *model.HUserMutation, oldName string, newName string) (*model.HUser, error) {
-	res, err := headscale.Client.RenameUser(oldName, newName)
-	if err != nil {
-		return nil, err
-	}
-	return model.ToHUser(res.User), nil
+	return service.NewHeadscaleService(ctx).RenameUser(oldName, newName)
 }
 
 // Machines is the resolver for the machines field.
@@ -176,6 +174,11 @@ func (r *mutationResolver) Headscale(ctx context.Context) (*model.HeadscaleMutat
 	}, nil
 }
 
+// ACL is the resolver for the acl field.
+func (r *mutationResolver) ACL(ctx context.Context) (*model.ACLMutation, error) {
+	return &model.ACLMutation{}, nil
+}
+
 // Machine is the resolver for the machine field.
 func (r *projectResolver) Machine(ctx context.Context, obj *model.Project) (*model.Machine, error) {
 	svc := service.NewMachineService(ctx)
@@ -201,6 +204,9 @@ func (r *projectMutationResolver) SaveProject(ctx context.Context, obj *model.Pr
 	if err != nil {
 		return nil, err
 	}
+	if config.GetConfig().ACL.Features.ProjectTag {
+		go service.NewHeadscaleService(ctx).TriggerUpdate()
+	}
 	return svc.ByIDWithLoader(&id)
 }
 
@@ -208,6 +214,9 @@ func (r *projectMutationResolver) SaveProject(ctx context.Context, obj *model.Pr
 func (r *projectMutationResolver) DeleteProject(ctx context.Context, obj *model.ProjectMutation, id string) (int, error) {
 	svc := service.NewProjectService(ctx)
 	count, err := svc.Delete(id)
+	if config.GetConfig().ACL.Features.ProjectTag {
+		go service.NewHeadscaleService(ctx).TriggerUpdate()
+	}
 	return int(count), err
 }
 
@@ -296,6 +305,9 @@ func (r *userInfoResolver) IsAdmin(ctx context.Context, obj *model.UserInfo) (*b
 	return &admin, nil
 }
 
+// ACLMutation returns ACLMutationResolver implementation.
+func (r *Resolver) ACLMutation() ACLMutationResolver { return &aCLMutationResolver{r} }
+
 // HMachine returns HMachineResolver implementation.
 func (r *Resolver) HMachine() HMachineResolver { return &hMachineResolver{r} }
 
@@ -341,6 +353,7 @@ func (r *Resolver) SyncResult() SyncResultResolver { return &syncResultResolver{
 // UserInfo returns UserInfoResolver implementation.
 func (r *Resolver) UserInfo() UserInfoResolver { return &userInfoResolver{r} }
 
+type aCLMutationResolver struct{ *Resolver }
 type hMachineResolver struct{ *Resolver }
 type hMachineMutationResolver struct{ *Resolver }
 type hRouteResolver struct{ *Resolver }

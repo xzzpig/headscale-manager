@@ -11,12 +11,14 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/juanfont/headscale v0.22.3
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/vektah/gqlparser/v2 v2.5.8
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/zap v1.25.0
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -69,5 +71,4 @@ require (
 	google.golang.org/genproto v0.0.0-20230526161137-0005af68ea54 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
