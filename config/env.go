@@ -28,14 +28,15 @@ type Config struct {
 		ACL               string `envconfig:"ENDPOINT_ACL"`
 	}
 	Oidc struct {
-		Enable       bool     `envconfig:"OIDC_ENABLE"`
-		ClientId     string   `envconfig:"OIDC_CLIENT_ID"`
-		ClientSecret string   `envconfig:"OIDC_CLIENT_SECRET"`
-		IssuerUrl    string   `envconfig:"OIDC_ISSUER_URL"`
-		RedirectUrl  string   `envconfig:"OIDC_REDIRECT_URL"`
-		Scopes       []string `envconfig:"OIDC_SCOPES"`
-		OriginCookie string   `envconfig:"OIDC_ORIGIN_COOKIE"`
-		DefaultUser  string   `envconfig:"OIDC_DEFAULT_USER"`
+		Enable           bool     `envconfig:"OIDC_ENABLE"`
+		ClientId         string   `envconfig:"OIDC_CLIENT_ID"`
+		ClientSecret     string   `envconfig:"OIDC_CLIENT_SECRET"`
+		IssuerUrl        string   `envconfig:"OIDC_ISSUER_URL"`
+		RedirectUrl      string   `envconfig:"OIDC_REDIRECT_URL"`
+		Scopes           []string `envconfig:"OIDC_SCOPES"`
+		OriginCookie     string   `envconfig:"OIDC_ORIGIN_COOKIE"`
+		DefaultUser      string   `envconfig:"OIDC_DEFAULT_USER"`
+		StripEmailDomain bool     `envconfig:"OIDC_STRIP_EMAIL_DOMAIN"`
 	}
 	Auth struct {
 		CookieKey string `envconfig:"AUTH_COOKIE_KEY"`

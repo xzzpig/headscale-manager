@@ -3,7 +3,6 @@ package oidc
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -186,7 +185,13 @@ func handleRedirect(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	fmt.Println(claims.IsAdmin())
+	claims.Name, err = util.NormalizeToFQDNRules(claims.Email, config.GetConfig().Oidc.StripEmailDomain)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	claims.IsAdmin()
 	ctx := context.WithValue(c.Request.Context(), mycontext.USER_INFO_KEY, &claims)
 	c.Request = c.Request.WithContext(ctx)
 	c.Next()

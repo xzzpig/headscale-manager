@@ -28,3 +28,7 @@ func TestGetObjectIDs(t *testing.T) {
 	t.Log(util.GetObjectIDs(nil) == nil)
 	t.Log(util.GetObjectIDs([]*string{util.Ptr("5f3b3a3f1a2f2d2c2c2c2c2c")}))
 }
+
+func TestNormalizeToFQDNRules(t *testing.T) {
+	t.Log(util.NormalizeToFQDNRules("lower_C@sample.com", true))
+}
