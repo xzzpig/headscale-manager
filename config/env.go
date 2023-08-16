@@ -52,6 +52,7 @@ type Config struct {
 		Password string `envconfig:"ACL_PASSWORD"`
 		Features struct {
 			UserSelf   bool `envconfig:"ACL_FEATURE_USER_SELF"`   // user can access device owned by himself
+			UserPeer   bool `envconfig:"ACL_FEATURE_USER_PEER"`   // tag:peer-<username> will be seen as user's device
 			UserShare  bool `envconfig:"ACL_FEATURE_USER_SHARE"`  // user can share device by tag:share-<username>
 			ProjectTag bool `envconfig:"ACL_FEATURE_PROJECT_TAG"` // tag:prj-acc-<project> allows access tag:prj-use-<project> and project routes
 		}

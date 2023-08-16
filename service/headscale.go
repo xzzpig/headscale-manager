@@ -171,6 +171,12 @@ func (svc *HeadscaleService) GenerateACL() (*policy.ACLPolicy, error) {
 				acl.Destinations = append(acl.Destinations, tagName+":*")
 				aclPolicy.TouchTagOwner(tagName)
 			}
+			if config.GetConfig().ACL.Features.UserPeer {
+				tagName := "tag:peer-" + user.Name
+				acl.Destinations = append(acl.Destinations, tagName+":*")
+				acl.Sources = append(acl.Sources, tagName)
+				aclPolicy.TouchTagOwner(tagName)
+			}
 
 			aclPolicy.ACLs = append(aclPolicy.ACLs, acl)
 		}
