@@ -45,6 +45,27 @@ func checkAccessHMachine(ctx context.Context, machineId uint64) (bool, error) {
 	return true, nil
 }
 
+func checkAccessTag(ctx context.Context, tag string) (bool, error) {
+	userInfo, err := mycontext.GetPtrFromContext[model.UserInfo](ctx, mycontext.USER_INFO_KEY)
+	if err != nil {
+		return false, err
+	}
+	if userInfo.IsAdmin() {
+		return true, nil
+	}
+	tag = strings.TrimPrefix(tag, "tag:")
+	if config.GetConfig().ACL.Features.UserPeer && strings.HasPrefix(tag, "peer-") {
+		return (tag == "peer-"+userInfo.Name), nil
+	}
+	if config.GetConfig().ACL.Features.UserShare && strings.HasPrefix(tag, "share-") {
+		return true, nil
+	}
+	if config.GetConfig().ACL.Features.ProjectTag && strings.HasPrefix(tag, "prj-") {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (service *HeadscaleService) RenameMachine(machineId uint64, name string) (*model.HMachine, error) {
 	access, err := checkAccessHMachine(service.ctx, machineId)
 	if err != nil {
@@ -105,6 +126,32 @@ func (service *HeadscaleService) ListMachines() ([]*model.HMachine, error) {
 		}
 	}
 	return machines, nil
+}
+
+func (service *HeadscaleService) SetMachineTags(machineId uint64, tags []string) (*model.HMachine, error) {
+	access, err := checkAccessHMachine(service.ctx, machineId)
+	if err != nil {
+		return nil, err
+	}
+	if !access {
+		return nil, ErrNotAccessible
+	}
+
+	for _, tag := range tags {
+		access, err := checkAccessTag(service.ctx, tag)
+		if err != nil {
+			return nil, err
+		}
+		if !access {
+			return nil, errors.Join(errors.New(tag+" not accessible"), ErrNotAccessible)
+		}
+	}
+
+	machine, err := headscale.Client.SetMachineTags(machineId, tags)
+	if err != nil {
+		return nil, err
+	}
+	return model.ToHMachine(machine.Machine), nil
 }
 
 func (service *HeadscaleService) CreateUser(name string) (*model.HUser, error) {

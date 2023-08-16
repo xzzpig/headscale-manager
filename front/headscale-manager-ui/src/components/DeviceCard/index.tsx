@@ -98,17 +98,19 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ machine, eventEmitter }) => {
                                 eventEmitter.emit("DO_REFRESH_MACHINES")
                             })
                         }} /></Col>
-                        <Col span={18}><Space wrap size={0}>{[access.isAdmin ? <NewDeviceTag key="NEW" onInputConfirm={async (value) => {
-                            await new Promise<void>((resolve, reject) => {
-                                eventEmitter.once("NEW_MACHINES", () => resolve())
-                                addTag(value)
-                            })
-                        }}>NEW</NewDeviceTag> : null, ...machine.forcedTags.map(tag => <DeviceTag key={tag} title={tag.replace("tag:", "")} onClose={access.isAdmin ? () => {
-                            return new Promise<void>((resolve, reject) => {
-                                eventEmitter.once("NEW_MACHINES", () => resolve())
-                                removeTag(tag)
-                            })
-                        } : undefined} />)]}</Space></Col>
+                        <Col span={18}><Space wrap size={0}>{[
+                            <NewDeviceTag key="NEW" onInputConfirm={async (value) => {
+                                await new Promise<void>((resolve, reject) => {
+                                    eventEmitter.once("NEW_MACHINES", () => resolve())
+                                    addTag(value)
+                                })
+                            }}>NEW</NewDeviceTag>,
+                            ...machine.forcedTags.map(tag => <DeviceTag key={tag} title={tag.replace("tag:", "")} onClose={() => {
+                                return new Promise<void>((resolve, reject) => {
+                                    eventEmitter.once("NEW_MACHINES", () => resolve())
+                                    removeTag(tag)
+                                })
+                            }} />)]}</Space></Col>
                     </Row>}
                 extra={
                     <Space onClick={e => e.stopPropagation()}>

@@ -326,7 +326,7 @@ type HMachineMutation{
 		tags: [String!]!
 	): HMachine! @goField(
 	forceResolver: true
-) @needAdmin(quiet: false)
+)
 	moveMachine(
 		machineId: Int!
 		userName: String!

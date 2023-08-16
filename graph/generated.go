@@ -2059,32 +2059,8 @@ func (ec *executionContext) _HMachineMutation_setMachineTags(ctx context.Context
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.HMachineMutation().SetMachineTags(rctx, obj, fc.Args["machineId"].(int), fc.Args["tags"].([]string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			quiet, err := ec.unmarshalNBoolean2bool(ctx, false)
-			if err != nil {
-				return nil, err
-			}
-			if ec.directives.NeedAdmin == nil {
-				return nil, errors.New("directive needAdmin is not implemented")
-			}
-			return ec.directives.NeedAdmin(ctx, obj, directive0, quiet)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.HMachine); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/xzzpig/headscale-manager/graph/model.HMachine`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.HMachineMutation().SetMachineTags(rctx, obj, fc.Args["machineId"].(int), fc.Args["tags"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

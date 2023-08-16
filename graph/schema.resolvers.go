@@ -53,11 +53,7 @@ func (r *hMachineMutationResolver) DeleteMachine(ctx context.Context, obj *model
 
 // SetMachineTags is the resolver for the setMachineTags field.
 func (r *hMachineMutationResolver) SetMachineTags(ctx context.Context, obj *model.HMachineMutation, machineID int, tags []string) (*model.HMachine, error) {
-	res, err := headscale.Client.SetMachineTags(uint64(machineID), tags)
-	if err != nil {
-		return nil, err
-	}
-	return model.ToHMachine(res.Machine), nil
+	return service.NewHeadscaleService(ctx).SetMachineTags(uint64(machineID), tags)
 }
 
 // MoveMachine is the resolver for the moveMachine field.
